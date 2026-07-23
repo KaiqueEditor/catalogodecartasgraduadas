@@ -1,0 +1,72 @@
+# Acervo Graduado — pacote pronto para publicar
+
+Esta pasta é o site inteiro. Não precisa de banco de dados nem servidor
+especial — é HTML/CSS/JS estático, então qualquer hospedagem simples serve.
+
+## Estrutura
+```
+index.html
+assets/style.css
+assets/app.js
+data.json          <- lista das 48 pecas (nome, preco, grade, imagens)
+img/hero/          <- foto de fundo do topo (2 tamanhos)
+img/thumbs/         <- fotos dos cards (2 tamanhos por peca, mobile e retina)
+favicon-32.png / favicon.png
+robots.txt
+```
+
+Para adicionar, remover ou reprecificar uma peça, dá pra editar só o
+`data.json` num editor de texto — não precisa mexer no HTML.
+
+---
+
+## Opção A — mais simples e gratuita (recomendada): Cloudflare Pages
+
+1. Crie uma conta grátis em https://pages.cloudflare.com
+2. "Create a project" → "Upload assets" → arraste esta pasta inteira
+   (o conteúdo, não a pasta em si — o `index.html` tem que ficar na raiz).
+3. Espera publicar (uns 30 segundos). Você recebe um link tipo
+   `algumacoisa.pages.dev` para testar.
+4. Em "Custom domains", adicione `catalogodecartasgraduadas.com.br`.
+5. No painel do registro.br (ou onde comprou o domínio), aponte o DNS
+   para a Cloudflare conforme as instruções que aparecerem na tela — a
+   Cloudflare mesma te dá o passo a passo com os registros exatos.
+6. Pronto — HTTPS automático, CDN mundial, carregamento rápido.
+
+## Opção B — Netlify (também gratuita, mesma ideia)
+
+1. https://app.netlify.com/drop
+2. Arraste a pasta.
+3. Em "Domain settings" → "Add custom domain", coloque
+   `catalogodecartasgraduadas.com.br` e siga as instruções de DNS.
+
+## Opção C — hospedagem tradicional (cPanel / FTP, tipo Hostinger, KingHost)
+
+1. Acesse o painel de hospedagem contratada junto com o domínio.
+2. Abra o Gerenciador de Arquivos (ou conecte por FTP com FileZilla).
+3. Entre na pasta `public_html`.
+4. Envie **todo o conteúdo** desta pasta para dentro de `public_html`
+   (o `index.html` direto dentro de `public_html`, não numa subpasta).
+5. Acesse catalogodecartasgraduadas.com.br — pronto.
+
+---
+
+## Sobre desempenho
+
+- As fotos ficam em duas versões (uma leve pra celular, uma maior pra
+  tela grande/retina) e só carregam conforme a pessoa rola a página —
+  ninguém baixa as 48 fotos de uma vez.
+- No celular a grade é sempre 2 colunas, então dá pra ver pelo menos
+  duas peças por rolagem.
+- Não existe botão de compra em lugar nenhum — é só visualização.
+
+## Atualizando preços depois
+
+Toda peça no `data.json` tem essa forma:
+```json
+{"id":0,"nome":"Gengar","det":"1999 JP ...","grade":"TAG 10 Gem Mint",
+ "cat":"Vintage","usd":185000,"brl":943500.0, ...}
+```
+Troque `usd` e `brl` e salve. Se o preço ainda não estiver definido,
+deixe `"usd":null,"brl":null` que o site mostra "Sob consulta"
+automaticamente.

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Acervo Graduado &mdash; Colecionaveis Certificados</title>
+<meta name="description" content="Catalogo de cartas Pokemon, Disney Lorcana e Magic: Final Fantasy encapsuladas por TAG, PSA, BGS e AGS. Pecas originais, verificaveis por numero de certificado.">
+<meta name="robots" content="index,follow">
+
+<meta property="og:title" content="Acervo Graduado">
+<meta property="og:description" content="Colecionaveis graduados: Pokemon, Disney Lorcana e Magic: Final Fantasy.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="img/hero/hero-1600.webp">
+
+<link rel="icon" href="favicon-32.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<link rel="preload" as="image" href="img/hero/hero-800.webp" media="(max-width: 899px)">
+<link rel="preload" as="image" href="img/hero/hero-1600.webp" media="(min-width: 900px)">
+
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<section class="hero">
+  <div class="hero-img"></div>
+  <div class="hero-veil"></div>
+  <div class="hero-inner">
+    <div class="hero-plate">
+      <div class="hero-eyebrow">ACERVO PARTICULAR &middot; GRADUACAO CERTIFICADA</div>
+      <div class="hero-title display">Acervo<br>Graduado</div>
+      <p class="hero-sub">Pokemon, Disney Lorcana e Magic: Final Fantasy encapsulados por TAG, PSA, BGS e AGS. Cada peca e verificavel pelo numero de certificado.</p>
+      <div class="hero-meta">
+        <div>PECAS<span id="metaTotal">&mdash;</span></div>
+        <div>PRECIFICADAS<span id="metaPrecificadas">&mdash;</span></div>
+        <div>ATUALIZADO<span>JUL / 2026</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="searchbar-wrap">
+  <div class="searchbar">
+    <span class="search-label">BUSCAR NO ACERVO</span>
+    <div class="search-input-wrap">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="#8d8d95" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="searchInput" class="search-input mono" placeholder="nome, set, numeracao...">
+    </div>
+    <select id="sortSelect" class="sort-select">
+      <option value="cat">Por categoria</option>
+      <option value="price-desc">Maior preco</option>
+      <option value="price-asc">Menor preco</option>
+    </select>
+    <div id="chips" class="chips"><div class="chip active" data-cat="Todas">Todas</div></div>
+    <span id="countTag" class="count-tag"></span>
+  </div>
+</div>
+
+<div class="grid-section">
+  <div id="grid"></div>
+  <div id="emptyState" class="empty-state">Nenhuma peca encontrada para esse filtro.</div>
+</div>
+
+<footer>
+  <p>Todas as pecas sao originais, encapsuladas e verificaveis pelo numero de serie da encapsuladora.<br>
+  Valores em reais, calculados sobre base em dolar. Sujeitos a alteracao sem aviso previo.<br>
+  Este catalogo e apenas para visualizacao. Para negociar uma peca, entre em contato diretamente.</p>
+  <p>ACERVO GRADUADO<br>Catalogo privado &middot; Julho 2026</p>
+</footer>
+
+<script src="assets/app.js" defer></script>
+</body>
+</html>
