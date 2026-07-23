@@ -1,0 +1,157 @@
+================================================================================
+                      ACERVO GRADUADO - RELATÓRIO & ANOTAÇÕES
+================================================================================
+Data de Atualização: 23 de Julho de 2026
+Projeto: Catalogo de Cartas Graduadas (Acervo Particular Certificado)
+Diretório: /Users/kaiquetorres/Downloads/catalogodecartasgraduadas
+================================================================================
+
+1. VISÃO GERAL DO SISTEMA
+--------------------------------------------------------------------------------
+O Acervo Graduado é um catálogo estático moderno e ultra leve desenvolvido sem
+frameworks pesados para máxima performance em dispositivos móveis e desktop.
+
+- Tecnologia: HTML5 + Vanilla CSS3 + Vanilla JS (ES6).
+- Design System: Tema escuro estilo Galeria/Museum, fontes IBM Plex Sans, IBM Plex
+  Mono e Oswald (Google Fonts).
+- Banco de Dados: Arquivo `data.json` carregado dinamicamente via JS.
+- Cotação Base: USD 1.00 = BRL 5.10. Total de 67 itens cadastrados.
+
+
+2. PROCESSAMENTO REALIZADO NESTA SESSÃO (18 NOVOS SLABS)
+--------------------------------------------------------------------------------
+- Recepção das imagens originais dos 18 novos slabs na pasta `novos_slabs/`.
+- Leitura OCR via Apple Vision Framework para extração precisa de:
+  • Nome da carta
+  • Edição / Set / Numeração
+  • Encapadora (TAG, PSA, BGS, GBA, AGS)
+  • Nota / Graduação (Gem Mint 10, Pristine 10, Mint 9)
+  • Número do Certificado de autenticidade
+- Processamento e Redimensionamento de Imagens:
+  • Cada foto foi otimizada e exportada no formato WebP de alta eficiência.
+  • Versão Celular (380w): salva em `img/thumbs/{id}-380.webp`
+  • Versão Retina/Desktop (760w): salva em `img/thumbs/{id}-760.webp`
+- Atualização da base `data.json` (ID 49 ao 66) com cotações de mercado.
+
+
+3. LISTA DETALHADA DOS 18 NOVOS SLABS ADICIONADOS (IDs 49 A 66)
+--------------------------------------------------------------------------------
+
+[ID 49] Dawn
+• Detalhes: 2025 Mega Evolution Phantasmal Flames #129/094 - SIR (Trainer)
+• Graduação: TAG 10 Gem Mint | Certificado: H5024798 (Oficial)
+• Categoria: Modernos | Preço Estimado: US$ 110.00 / R$ 561,00
+
+[ID 50] Moltres & Zapdos & Articuno GX
+• Detalhes: 2019 Sun & Moon Hidden Fates ETB #SM210 - Tag Team Black Star Promo
+• Graduação: TAG 10 Gem Mint | Certificado: S3104921 (Oficial)
+• Categoria: Modernos | Preço Estimado: US$ 120.00 / R$ 612,00
+
+[ID 51] Charizard ex
+• Detalhes: 2024 SV Paldean Fates Tins #074 - Black Star Promo Ultra Rare
+• Graduação: TAG 10 Gem Mint | Certificado: G1038933 (Oficial)
+• Categoria: Charizard | Preço Estimado: US$ 85.00 / R$ 433,50
+
+[ID 52] Pikachu
+• Detalhes: 2023 SV Paldea Evolved ETB #027 - Black Star Promo
+• Graduação: TAG 10 Gem Mint | Certificado: P1029482 (Oficial)
+• Categoria: Modernos | Preço Estimado: US$ 120.00 / R$ 612,00
+
+[ID 53] Ethan's Magcargo
+• Detalhes: 2025 Mega JP Mega Dream ex - AR #197/193
+• Graduação: TAG 10 Pristine | Certificado: Z2456964 (Oficial)
+• Categoria: Modernos | Preço Estimado: US$ 50.00 / R$ 255,00
+
+[ID 54] Paradise Resort
+• Detalhes: 2025 SV Pokemon World Championship 'STAFF' Black Star Promo #224
+• Graduação: TAG 10 Gem Mint | Certificado: Y3908500 (Oficial)
+• Categoria: Modernos | Preço Estimado: US$ 200.00 / R$ 1.020,00
+
+[ID 55] Ethan's Typhlosion
+• Detalhes: 2025 SV Destined Rivals #190/182 - Illustration Rare
+• Graduação: TAG 10 Gem Mint | Certificado: K8835505 (Oficial)
+• Categoria: Modernos | Preço Estimado: US$ 55.00 / R$ 280,50
+
+[ID 56] Mew ex
+• Detalhes: 2023 SV 151 Ultra-Premium Collection #053 - Black Star Promo
+• Graduação: GBA 9 Mint | Certificado: P0000037
+• Categoria: Modernos | Preço Estimado: US$ 110.00 / R$ 561,00
+
+[ID 57] Eevee
+• Detalhes: 2025 SV Prismatic Evolutions ETB #173 - Black Star Promo
+• Graduação: TAG 10 Gem Mint | Certificado: N4955066 (Oficial)
+• Categoria: Modernos | Preço Estimado: US$ 340.00 / R$ 1.734,00
+
+[ID 58] Pikachu ex
+• Detalhes: 2025 Mega JP Mega Dream ex #234/193 - Special Art Rare
+• Graduação: TAG 10 Gem Mint | Certificado: U1646722 (Oficial)
+• Categoria: Modernos | Preço Estimado: US$ 600.00 / R$ 3.060,00
+
+[ID 59] Scrooge McDuck
+• Detalhes: 2024 Disney Lorcana EN 3 #218 - Enchanted
+• Graduação: PSA 9 Mint | Certificado: 102739564
+• Categoria: Lorcana | Preço Estimado: US$ 220.00 / R$ 1.122,00
+
+[ID 60] Mega Charizard X ex
+• Detalhes: 2025 ME Promos UPC #023 - Pokemon TCG (GBA/PT)
+• Graduação: GBA 10 Gem Mint | Certificado: P0000852
+• Categoria: Charizard | Preço Estimado: US$ 60.00 / R$ 306,00
+
+[ID 61] Hop's Zacian ex
+• Detalhes: 2025 SV Journey Together #186/159 - SIR
+• Graduação: TAG 10 Gem Mint | Certificado: H6978241 (Oficial)
+• Categoria: Modernos | Preço Estimado: US$ 70.00 / R$ 357,00
+
+[ID 62] Mew ex
+• Detalhes: 2023 SV 151 #205/165 - Hyper Rare
+• Graduação: TAG 10 Gem Mint | Certificado: S6658931 (Oficial)
+• Categoria: Modernos | Preço Estimado: US$ 110.00 / R$ 561,00
+
+[ID 63] N's Zekrom
+• Detalhes: 2026 Mega Ascended Heroes Elite TB #031 - Black Star Promo Holo
+• Graduação: TAG 10 Gem Mint | Certificado: M2404129 (Oficial)
+• Categoria: Modernos | Preço Estimado: US$ 190.00 / R$ 969,00
+
+[ID 64] Psyduck
+• Detalhes: 2026 Mega Evolution Ascended Heroes #226/217 - Illustration Rare
+• Graduação: TAG 10 Gem Mint | Certificado: R1254538 (Oficial)
+• Categoria: Modernos | Preço Estimado: US$ 450.00 / R$ 2.295,00
+
+[ID 65] Raikou V (FA)
+• Detalhes: 2022 JP SWSH VSTAR Universe #218/172 - SAR
+• Graduação: PSA 10 Gem Mint | Certificado: 96401952
+• Categoria: Modernos | Preço Estimado: US$ 90.00 / R$ 459,00
+
+[ID 66] Eevee ex
+• Detalhes: 2025 SV Prismatic Evolutions SPC #174 - Black Star Promo
+• Graduação: TAG 10 Gem Mint | Certificado: K1784561 (Oficial)
+• Categoria: Modernos | Preço Estimado: US$ 100.00 / R$ 510,00
+
+
+4. COMO SUBIR O PROJETO PARA O GITHUB E PUBLICAR NA WEB
+--------------------------------------------------------------------------------
+Passo A - Salvar tudo no Git:
+1. Abra o terminal na pasta do projeto:
+   cd /Users/kaiquetorres/Downloads/catalogodecartasgraduadas
+2. Adicione todos os novos arquivos:
+   git add .
+3. Crie o commit:
+   git commit -m "feat: adicionados 18 novos slabs graduados e otimizacao webp"
+4. Envie para o repositório remoto (se já tiver o remote configurado):
+   git push origin main
+
+Passo B - Publicação Gratuita na Web (Cloudflare Pages / Netlify):
+- Cloudflare Pages (Recomendado):
+  1. Acesse https://pages.cloudflare.com
+  2. Clique em "Create a project" -> "Upload assets".
+  3. Arraste a pasta `catalogodecartasgraduadas` inteira.
+  4. Conecte seu domínio `catalogodecartasgraduadas.com.br` nas configurações.
+
+- Netlify (Alternativa):
+  1. Acesse https://app.netlify.com/drop
+  2. Arraste a pasta do projeto.
+  3. Configure o domínio personalizado.
+
+================================================================================
+Documento gerado automaticamente pelo assistente em 23/07/2026.
+================================================================================
