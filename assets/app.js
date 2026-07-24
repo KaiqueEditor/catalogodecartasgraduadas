@@ -30,6 +30,7 @@
       : '<div class="price-consult">Sob consulta</div><div></div>';
     var museum = it.brl != null && it.brl >= 100000 ? ' museum' : '';
     var oficial = it.oficial ? '<div class="badge-oficial">FOTO OFICIAL &middot; ' + esc(it.cert) + '</div>' : '';
+    var ref = it.ref ? '<a class="card-ref" href="' + esc(it.ref) + '" target="_blank" rel="noopener">ver anuncio de referencia &rarr;</a>' : '';
     return (
       '<div class="card' + museum + '" data-id="' + it.id + '">' +
         '<div class="card-imgwrap">' +
@@ -46,6 +47,7 @@
           '<div class="card-name">' + esc(it.nome) + '</div>' +
           '<div class="card-det">' + esc(it.det) + '</div>' +
           '<div class="card-pricerow">' + priceBlock + '</div>' +
+          ref +
         '</div>' +
       '</div>'
     );
