@@ -1,16 +1,20 @@
 (function () {
   var grid = document.getElementById('grid');
-  var chipsWrap = document.getElementById('chips');
+  var tcgChipsWrap = document.getElementById('tcgChips');
+  var subChipsWrap = document.getElementById('subChips');
   var searchInput = document.getElementById('searchInput');
   var sortSelect = document.getElementById('sortSelect');
   var countTag = document.getElementById('countTag');
   var emptyState = document.getElementById('emptyState');
 
   var DATA = [];
-  var CATS = [];
-  var activeCat = 'Todas';
+  var SUBCATS = { Pokemon: [] };
+  var activeTcg = 'All';
+  var activeSub = 'All';
   var query = '';
   var sortMode = 'cat';
+
+  var TCG_LABELS = { Pokemon: 'Pokemon', Lorcana: 'Lorcana', Magic: 'Magic' };
 
   function brl(v) {
     return 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -27,10 +31,10 @@
   function cardHTML(it) {
     var priceBlock = it.brl != null
       ? '<div class="price-brl">' + brl(it.brl) + '</div><div class="price-usd">' + usd(it.usd) + '</div>'
-      : '<div class="price-consult">Sob consulta</div><div></div>';
+      : '<div class="price-consult">Price on request</div><div></div>';
     var museum = it.brl != null && it.brl >= 100000 ? ' museum' : '';
-    var oficial = it.oficial ? '<div class="badge-oficial">FOTO OFICIAL &middot; ' + esc(it.cert) + '</div>' : '';
-    var ref = it.ref ? '<a class="card-ref" href="' + esc(it.ref) + '" target="_blank" rel="noopener">ver anuncio de referencia &rarr;</a>' : '';
+    var oficial = it.oficial ? '<div class="badge-oficial">OFFICIAL PHOTO &middot; ' + esc(it.cert) + '</div>' : '';
+    var ref = it.ref ? '<a class="card-ref" href="' + esc(it.ref) + '" target="_blank" rel="noopener">view reference listing &rarr;</a>' : '';
     return (
       '<div class="card' + museum + '" data-id="' + it.id + '">' +
         '<div class="card-imgwrap">' +
@@ -56,20 +60,22 @@
   function render() {
     var q = query.trim().toLowerCase();
     var list = DATA.filter(function (it) {
-      var matchCat = activeCat === 'Todas' || it.cat === activeCat;
+      var matchTcg = activeTcg === 'All' || it.tcg === activeTcg;
+      var matchSub = activeTcg !== 'Pokemon' || activeSub === 'All' || it.cat === activeSub;
       var matchQuery = !q || (it.nome + ' ' + it.det + ' ' + it.cat).toLowerCase().indexOf(q) !== -1;
-      return matchCat && matchQuery;
+      return matchTcg && matchSub && matchQuery;
     });
 
     if (sortMode === 'price-desc') list = list.slice().sort(function (a, b) { return (b.brl == null ? -1 : b.brl) - (a.brl == null ? -1 : a.brl); });
     if (sortMode === 'price-asc') list = list.slice().sort(function (a, b) { return (a.brl == null ? 1e15 : a.brl) - (b.brl == null ? 1e15 : b.brl); });
 
-    countTag.textContent = list.length + (list.length === 1 ? ' peca' : ' pecas');
+    countTag.textContent = list.length + (list.length === 1 ? ' piece' : ' pieces');
 
     var html = '';
     if (sortMode === 'cat') {
-      for (var c = 0; c < CATS.length; c++) {
-        var cat = CATS[c];
+      var groupOrder = activeTcg === 'Pokemon' ? SUBCATS.Pokemon : uniqueCats(list);
+      for (var c = 0; c < groupOrder.length; c++) {
+        var cat = groupOrder[c];
         var group = list.filter(function (it) { return it.cat === cat; });
         if (!group.length) continue;
         html += '<div class="cat-heading"><h2>' + esc(cat) + '</h2><div class="line"></div><span class="n">' +
@@ -82,6 +88,12 @@
     grid.innerHTML = html;
     emptyState.style.display = list.length ? 'none' : 'block';
     revealCards();
+  }
+
+  function uniqueCats(list) {
+    var seen = [];
+    list.forEach(function (it) { if (seen.indexOf(it.cat) === -1) seen.push(it.cat); });
+    return seen;
   }
 
   function revealCards() {
@@ -101,12 +113,37 @@
     cards.forEach(function (c) { io.observe(c); });
   }
 
-  chipsWrap.addEventListener('click', function (e) {
+  function renderSubChips() {
+    if (activeTcg !== 'Pokemon') {
+      subChipsWrap.innerHTML = '';
+      subChipsWrap.style.display = 'none';
+      return;
+    }
+    subChipsWrap.style.display = '';
+    var html = '<div class="chip sub' + (activeSub === 'All' ? ' active' : '') + '" data-sub="All">All</div>';
+    SUBCATS.Pokemon.forEach(function (c) {
+      html += '<div class="chip sub' + (activeSub === c ? ' active' : '') + '" data-sub="' + esc(c) + '">' + esc(c) + '</div>';
+    });
+    subChipsWrap.innerHTML = html;
+  }
+
+  tcgChipsWrap.addEventListener('click', function (e) {
     var chip = e.target.closest('.chip');
     if (!chip) return;
-    document.querySelectorAll('.chip').forEach(function (c) { c.classList.remove('active'); });
+    document.querySelectorAll('#tcgChips .chip').forEach(function (c) { c.classList.remove('active'); });
     chip.classList.add('active');
-    activeCat = chip.dataset.cat;
+    activeTcg = chip.dataset.tcg;
+    activeSub = 'All';
+    renderSubChips();
+    render();
+  });
+
+  subChipsWrap.addEventListener('click', function (e) {
+    var chip = e.target.closest('.chip');
+    if (!chip) return;
+    document.querySelectorAll('#subChips .chip').forEach(function (c) { c.classList.remove('active'); });
+    chip.classList.add('active');
+    activeSub = chip.dataset.sub;
     render();
   });
 
@@ -126,20 +163,26 @@
     .then(function (r) { return r.json(); })
     .then(function (json) {
       DATA = json.itens;
-      CATS = json.categorias;
+      SUBCATS.Pokemon = json.categorias.filter(function (c) {
+        return DATA.some(function (it) { return it.cat === c && it.tcg === 'Pokemon'; });
+      });
       var metaTotal = document.getElementById('metaTotal');
       var metaPrec = document.getElementById('metaPrecificadas');
       if (metaTotal) metaTotal.textContent = DATA.length;
       if (metaPrec) metaPrec.textContent = DATA.filter(function (it) { return it.usd != null; }).length;
-      var chipsHTML = '<div class="chip active" data-cat="Todas">Todas</div>';
-      CATS.forEach(function (c) {
-        chipsHTML += '<div class="chip" data-cat="' + esc(c) + '">' + esc(c) + '</div>';
+
+      var tcgs = json.tcgs || ['Pokemon', 'Lorcana', 'Magic'];
+      var tcgHTML = '<div class="chip tcg active" data-tcg="All">All</div>';
+      tcgs.forEach(function (t) {
+        var count = DATA.filter(function (it) { return it.tcg === t; }).length;
+        tcgHTML += '<div class="chip tcg" data-tcg="' + esc(t) + '">' + esc(TCG_LABELS[t] || t) + ' <span class="chip-n">' + count + '</span></div>';
       });
-      chipsWrap.innerHTML = chipsHTML;
+      tcgChipsWrap.innerHTML = tcgHTML;
+      renderSubChips();
       render();
     })
     .catch(function (err) {
-      grid.innerHTML = '<div class="empty-state" style="display:block">Nao foi possivel carregar o acervo. Recarregue a pagina.</div>';
+      grid.innerHTML = '<div class="empty-state" style="display:block">Could not load the collection. Please reload the page.</div>';
       console.error(err);
     });
 })();

@@ -29,13 +29,13 @@
   <div class="hero-veil"></div>
   <div class="hero-inner">
     <div class="hero-plate">
-      <div class="hero-eyebrow">ACERVO PARTICULAR &middot; GRADUACAO CERTIFICADA</div>
-      <div class="hero-title display">Acervo<br>Graduado</div>
-      <p class="hero-sub">Pokemon, Disney Lorcana e Magic: Final Fantasy encapsulados por TAG, PSA, BGS e AGS. Cada peca e verificavel pelo numero de certificado.</p>
+      <div class="hero-eyebrow">PRIVATE COLLECTION &middot; CERTIFIED GRADING</div>
+      <div class="hero-title display">Graded<br>Collection</div>
+      <p class="hero-sub">Pokemon, Disney Lorcana and Magic: Final Fantasy encapsulated by TAG, PSA, BGS and AGS. Every piece is verifiable by its certificate number.</p>
       <div class="hero-meta">
-        <div>PECAS<span id="metaTotal">&mdash;</span></div>
-        <div>PRECIFICADAS<span id="metaPrecificadas">&mdash;</span></div>
-        <div>ATUALIZADO<span>JUL / 2026</span></div>
+        <div>PIECES<span id="metaTotal">&mdash;</span></div>
+        <div>PRICED<span id="metaPrecificadas">&mdash;</span></div>
+        <div>UPDATED<span>JUL / 2026</span></div>
       </div>
     </div>
   </div>
@@ -43,31 +43,33 @@
 
 <div class="searchbar-wrap">
   <div class="searchbar">
-    <span class="search-label">BUSCAR NO ACERVO</span>
     <div class="search-input-wrap">
       <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="#8d8d95" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input id="searchInput" class="search-input mono" placeholder="nome, set, numeracao...">
+      <input id="searchInput" class="search-input mono" placeholder="name, set, number...">
     </div>
     <select id="sortSelect" class="sort-select">
-      <option value="cat">Por categoria</option>
-      <option value="price-desc">Maior preco</option>
-      <option value="price-asc">Menor preco</option>
+      <option value="cat">Sort: Category</option>
+      <option value="price-desc">Price: High to Low</option>
+      <option value="price-asc">Price: Low to High</option>
     </select>
-    <div id="chips" class="chips"><div class="chip active" data-cat="Todas">Todas</div></div>
     <span id="countTag" class="count-tag"></span>
+  </div>
+  <div class="chipsbar">
+    <div id="tcgChips" class="chips tcg-chips"></div>
+    <div id="subChips" class="chips sub-chips"></div>
   </div>
 </div>
 
 <div class="grid-section">
   <div id="grid"></div>
-  <div id="emptyState" class="empty-state">Nenhuma peca encontrada para esse filtro.</div>
+  <div id="emptyState" class="empty-state">No pieces found for this filter.</div>
 </div>
 
 <footer>
-  <p>Todas as pecas sao originais, encapsuladas e verificaveis pelo numero de serie da encapsuladora.<br>
-  Valores em reais, calculados sobre base em dolar. Sujeitos a alteracao sem aviso previo.<br>
-  Este catalogo e apenas para visualizacao. Para negociar uma peca, entre em contato diretamente.</p>
-  <p>ACERVO GRADUADO<br>Catalogo privado &middot; Julho 2026</p>
+  <p>All pieces are original, encapsulated and verifiable by the grading company's serial number.<br>
+  Prices in BRL, calculated from a USD base. Subject to change without notice.<br>
+  This catalog is for viewing only. To negotiate a piece, contact us directly.</p>
+  <p>GRADED COLLECTION<br>Private catalog &middot; July 2026</p>
 </footer>
 
 <script src="assets/app.js" defer></script>
