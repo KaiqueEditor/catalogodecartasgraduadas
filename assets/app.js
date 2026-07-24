@@ -147,6 +147,13 @@
     render();
   });
 
+  grid.addEventListener('click', function (e) {
+    if (e.target.closest('.card-ref')) return;
+    var card = e.target.closest('.card');
+    if (!card) return;
+    window.location.href = 'card.html?id=' + card.dataset.id;
+  });
+
   var searchTimer;
   searchInput.addEventListener('input', function (e) {
     clearTimeout(searchTimer);
