@@ -26,7 +26,7 @@ body{
 /* ---------- HERO ---------- */
 .hero{
   position:relative;
-  min-height:280px;
+  min-height:0;
   display:flex;
   align-items:flex-end;
   overflow:hidden;
@@ -55,20 +55,20 @@ body{
   width:100%;
   max-width:1240px;
   margin:0 auto;
-  padding:0 18px 24px;
+  padding:28px 18px 20px;
 }
-@media (min-width:640px){.hero-inner{padding:0 32px 36px;}}
+@media (min-width:640px){.hero-inner{padding:40px 32px 32px;}}
 .hero-plate{
   border:1px solid rgba(198,161,91,0.55);
   background:rgba(10,10,11,0.55);
   backdrop-filter:blur(6px);
-  padding:16px 18px;
+  padding:18px;
   max-width:620px;
   opacity:0;
   transform:translateY(14px);
   animation:rise 0.8s cubic-bezier(.16,.8,.3,1) 0.1s forwards;
 }
-@media (min-width:640px){.hero-plate{padding:18px 22px;}}
+@media (min-width:640px){.hero-plate{padding:20px 22px;}}
 @keyframes rise{to{opacity:1; transform:translateY(0);}}
 @media (prefers-reduced-motion:reduce){.hero-plate{animation:none; opacity:1; transform:none;}}
 .hero-eyebrow{
