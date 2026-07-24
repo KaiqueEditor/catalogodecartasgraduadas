@@ -27,6 +27,9 @@
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
+  function slugFor(it) {
+    return it.cert ? it.cert : 'p' + it.id;
+  }
 
   function cardHTML(it) {
     var priceBlock = it.brl != null
@@ -36,7 +39,7 @@
     var oficial = it.oficial ? '<div class="badge-oficial">OFFICIAL PHOTO &middot; ' + esc(it.cert) + '</div>' : '';
     var ref = it.ref ? '<a class="card-ref" href="' + esc(it.ref) + '" target="_blank" rel="noopener">view reference listing &rarr;</a>' : '';
     return (
-      '<div class="card' + museum + '" data-id="' + it.id + '">' +
+      '<div class="card' + museum + '" data-slug="' + esc(slugFor(it)) + '">' +
         '<div class="card-imgwrap">' +
           '<img src="' + it.img_s + '" srcset="' + it.img_s + ' 380w, ' + it.img_l + ' 760w" ' +
                'sizes="(min-width:920px) 360px, 45vw" ' +
@@ -151,7 +154,7 @@
     if (e.target.closest('.card-ref')) return;
     var card = e.target.closest('.card');
     if (!card) return;
-    window.location.href = 'card.html?id=' + card.dataset.id;
+    window.location.href = '/c/' + card.dataset.slug;
   });
 
   var searchTimer;

@@ -13,13 +13,21 @@
     });
   }
 
+  function slugFor(it) {
+    return it.cert ? it.cert : 'p' + it.id;
+  }
+
+  var pathMatch = location.pathname.match(/\/c\/([^/]+)/);
+  var slug = pathMatch ? decodeURIComponent(pathMatch[1]) : null;
   var params = new URLSearchParams(location.search);
-  var id = parseInt(params.get('id'), 10);
+  var id = slug ? null : parseInt(params.get('id'), 10);
 
   fetch('data.json')
     .then(function (r) { return r.json(); })
     .then(function (json) {
-      var it = json.itens.filter(function (x) { return x.id === id; })[0];
+      var it = slug
+        ? json.itens.filter(function (x) { return slugFor(x) === slug; })[0]
+        : json.itens.filter(function (x) { return x.id === id; })[0];
       if (!it) {
         root.innerHTML = '<div class="detail-loading">Card not found. <a href="index.html">Go back</a>.</div>';
         return;
@@ -41,12 +49,12 @@
         : '';
 
       // find prev/next within same list order for simple navigation
-      var idx = json.itens.findIndex(function (x) { return x.id === id; });
+      var idx = json.itens.findIndex(function (x) { return x.id === it.id; });
       var prevItem = json.itens[idx - 1];
       var nextItem = json.itens[idx + 1];
       var navHTML = '<div class="detail-nav">' +
-        (prevItem ? '<a href="card.html?id=' + prevItem.id + '">&larr; ' + esc(prevItem.nome) + '</a>' : '<span></span>') +
-        (nextItem ? '<a href="card.html?id=' + nextItem.id + '">' + esc(nextItem.nome) + ' &rarr;</a>' : '<span></span>') +
+        (prevItem ? '<a href="/c/' + esc(slugFor(prevItem)) + '">&larr; ' + esc(prevItem.nome) + '</a>' : '<span></span>') +
+        (nextItem ? '<a href="/c/' + esc(slugFor(nextItem)) + '">' + esc(nextItem.nome) + ' &rarr;</a>' : '<span></span>') +
         '</div>';
 
       root.innerHTML =
