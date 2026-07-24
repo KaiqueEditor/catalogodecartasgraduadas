@@ -32,7 +32,11 @@ os.makedirs(out_dir, exist_ok=True)
 count = 0
 for it in data["itens"]:
     slug = slug_for(it)
-    price = ("US$ " + format(it["usd"], ",.2f")) if it.get("usd") is not None else "Price on request"
+    if it.get("usd") is not None:
+        brl_str = format(it["brl"], ",.2f").replace(",", "X").replace(".", ",").replace("X", ".")
+        price = "US$ " + format(it["usd"], ",.2f") + " — R$ " + brl_str
+    else:
+        price = "Price on request"
     desc = it["det"] + " — " + it["grade"] + " — " + price
     image_url = DOMAIN + "/" + it["img_l"]
     page_url = DOMAIN + "/c/" + slug
