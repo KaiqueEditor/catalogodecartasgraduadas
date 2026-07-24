@@ -39,7 +39,6 @@
         : '<div class="price-consult">Price on request</div>';
 
       var oficial = it.oficial ? '<div class="badge-oficial">OFFICIAL PHOTO &middot; ' + esc(it.cert) + '</div>' : '';
-      var refBtn = it.ref ? '<a class="detail-btn" href="' + esc(it.ref) + '" target="_blank" rel="noopener">View reference listing &rarr;</a>' : '';
 
       var about = it.about ? '<section class="detail-section"><h2>About this card</h2><p>' + esc(it.about) + '</p></section>' : '';
       var graderInfo = it.graderInfo ? '<section class="detail-section"><h2>About the grading</h2><p>' + esc(it.graderInfo) + '</p></section>' : '';
@@ -69,7 +68,6 @@
             '<p class="detail-det">' + esc(it.det) + '</p>' +
             '<div class="detail-pricebox">' + priceBlock + '</div>' +
             certRow +
-            refBtn +
           '</div>' +
         '</div>' +
         about +
