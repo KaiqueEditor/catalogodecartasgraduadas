@@ -18,7 +18,7 @@
   }
 
   var pathMatch = location.pathname.match(/\/c\/([^/]+)/);
-  var slug = pathMatch ? decodeURIComponent(pathMatch[1]) : null;
+  var slug = root.dataset.slug || (pathMatch ? decodeURIComponent(pathMatch[1]) : null);
   var params = new URLSearchParams(location.search);
   var id = slug ? null : parseInt(params.get('id'), 10);
 
