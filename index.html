@@ -20,7 +20,7 @@
 <link rel="preload" as="image" href="img/hero/hero-800.webp" media="(max-width: 899px)">
 <link rel="preload" as="image" href="img/hero/hero-1600.webp" media="(min-width: 900px)">
 
-<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/style.css?v=2">
 </head>
 <body>
 
@@ -47,11 +47,15 @@
       <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="#8d8d95" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input id="searchInput" class="search-input mono" placeholder="name, set, number...">
     </div>
-    <select id="sortSelect" class="sort-select">
-      <option value="cat">Sort: Category</option>
-      <option value="price-desc">Price: High to Low</option>
-      <option value="price-asc">Price: Low to High</option>
-    </select>
+    <div class="select-wrap">
+      <svg class="select-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
+      <select id="sortSelect" class="sort-select">
+        <option value="cat">Browse: by category</option>
+        <option value="price-desc">Price: high to low</option>
+        <option value="price-asc">Price: low to high</option>
+      </select>
+      <svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
     <span id="countTag" class="count-tag"></span>
   </div>
   <div class="chipsbar">
@@ -72,6 +76,6 @@
   <p>GRADED COLLECTION<br>Private catalog &middot; July 2026</p>
 </footer>
 
-<script src="assets/app.js" defer></script>
+<script src="assets/app.js?v=2" defer></script>
 </body>
 </html>
