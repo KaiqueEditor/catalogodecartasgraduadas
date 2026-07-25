@@ -234,6 +234,7 @@
         : '<div class="price-consult">Price on request</div>';
 
       var oficial = it.oficial ? '<div class="badge-oficial">OFFICIAL PHOTO &middot; ' + esc(it.cert) + '</div>' : '';
+      var featureTag = it.tag ? '<div class="badge-feature">' + esc(it.tag) + '</div>' : '';
       var hasBack = !!it.img_back_l;
       var faceToggle = hasBack
         ? '<div class="face-toggle"><button type="button" class="face-btn active" data-face="front">Front</button><button type="button" class="face-btn" data-face="back">Back</button></div>'
@@ -261,6 +262,7 @@
             '<div class="detail-imgwrap' + (it.sold ? ' is-sold' : '') + '">' +
               '<img id="detailImg" src="' + it.img_l + '" alt="' + esc(it.nome) + '">' +
               oficial +
+              featureTag +
               (it.sold ? '<div class="sold-badge"><span>SOLD</span></div>' : '') +
             '</div>' +
             faceToggle +
