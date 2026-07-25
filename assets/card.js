@@ -60,20 +60,20 @@
       ctx.fillStyle = glow;
       ctx.fillRect(0, 0, W, H);
 
-      // eyebrow
+      // tiny eyebrow, kept minimal so the slab owns the frame
       ctx.fillStyle = '#e8c878';
-      ctx.font = '600 26px "IBM Plex Mono", monospace';
+      ctx.font = '600 22px "IBM Plex Mono", monospace';
       ctx.textAlign = 'center';
-      ctx.fillText('GRADED COLLECTION', W / 2, 78);
+      ctx.fillText('GRADED COLLECTION', W / 2, 56);
 
-      // slab image, contain-fit inside box (bigger when there's no price block below)
-      var boxX = 90, boxY = 122, boxW = W - 180, boxH = showPrice ? 760 : 860;
+      // slab image, contain-fit inside a big box — the slab is the hero here
+      var boxX = 60, boxY = 78, boxW = W - 120, boxH = 960;
       var scale = Math.min(boxW / cardImg.width, boxH / cardImg.height);
       var drawW = cardImg.width * scale, drawH = cardImg.height * scale;
       var drawX = boxX + (boxW - drawW) / 2, drawY = boxY + (boxH - drawH) / 2;
 
       ctx.save();
-      roundRect(ctx, drawX - 16, drawY - 16, drawW + 32, drawH + 32, 18);
+      roundRect(ctx, drawX - 14, drawY - 14, drawW + 28, drawH + 28, 16);
       ctx.fillStyle = '#050506';
       ctx.fill();
       ctx.strokeStyle = 'rgba(198,161,91,0.5)';
@@ -83,19 +83,19 @@
       ctx.drawImage(cardImg, drawX, drawY, drawW, drawH);
       ctx.restore();
 
-      var y = boxY + boxH + 86;
+      var y = boxY + boxH + 60;
 
       // category + grade pill
       ctx.textAlign = 'left';
       ctx.fillStyle = '#8d8d95';
-      ctx.font = '500 24px "IBM Plex Mono", monospace';
+      ctx.font = '500 23px "IBM Plex Mono", monospace';
       ctx.fillText(it.cat.toUpperCase(), 90, y);
 
       ctx.textAlign = 'right';
       var gradeText = it.grade;
-      ctx.font = '600 24px "IBM Plex Mono", monospace';
+      ctx.font = '600 23px "IBM Plex Mono", monospace';
       var gradeW = ctx.measureText(gradeText).width;
-      var pillPad = 20, pillH = 44;
+      var pillPad = 18, pillH = 42;
       var pillX = W - 90 - gradeW - pillPad * 2;
       roundRect(ctx, pillX, y - pillH + 12, gradeW + pillPad * 2, pillH, pillH / 2);
       ctx.strokeStyle = 'rgba(198,161,91,0.45)';
@@ -105,38 +105,32 @@
       ctx.textAlign = 'center';
       ctx.fillText(gradeText, pillX + (gradeW + pillPad * 2) / 2, y);
 
-      y += 62;
+      y += 58;
       ctx.textAlign = 'left';
       ctx.fillStyle = '#f1ede2';
-      ctx.font = '600 56px Oswald, sans-serif';
-      ctx.fillText(it.nome, 90, y);
+      ctx.font = '600 50px Oswald, sans-serif';
+      ctx.fillText(fitText(ctx, it.nome, W - 180), 90, y);
 
-      y += 42;
-      ctx.fillStyle = '#8d8d95';
-      ctx.font = '400 25px "IBM Plex Sans", sans-serif';
-      var detLines = wrapText(ctx, it.det, 90, y, W - 180, 32, true);
-      y += (detLines - 1) * 32;
-
-      y += 88;
+      y += 82;
 
       if (showPrice && it.brl != null) {
         ctx.textAlign = 'left';
         ctx.fillStyle = '#4fae74';
-        ctx.font = '700 78px "IBM Plex Mono", monospace';
+        ctx.font = '700 76px "IBM Plex Mono", monospace';
         ctx.fillText(brl(it.brl), 90, y);
 
         ctx.fillStyle = '#5c5c63';
-        ctx.font = '500 28px "IBM Plex Mono", monospace';
-        ctx.fillText(usd(it.usd), 92, y + 40);
+        ctx.font = '500 27px "IBM Plex Mono", monospace';
+        ctx.fillText(usd(it.usd), 92, y + 38);
       } else if (showPrice) {
         ctx.textAlign = 'left';
         ctx.fillStyle = '#8d8d95';
-        ctx.font = 'italic 400 38px "IBM Plex Sans", sans-serif';
+        ctx.font = 'italic 400 36px "IBM Plex Sans", sans-serif';
         ctx.fillText('Price on request', 90, y);
       } else {
         // call-to-action banner instead of a price
-        var ctaW = W - 180, ctaH = 96;
-        var ctaY = y - 62;
+        var ctaW = W - 180, ctaH = 90;
+        var ctaY = y - 60;
         roundRect(ctx, 90, ctaY, ctaW, ctaH, 14);
         var ctaGrad = ctx.createLinearGradient(90, 0, 90 + ctaW, 0);
         ctaGrad.addColorStop(0, 'rgba(232,200,120,0.10)');
@@ -149,27 +143,27 @@
 
         ctx.textAlign = 'center';
         ctx.fillStyle = '#e8c878';
-        ctx.font = '600 34px "IBM Plex Mono", monospace';
-        ctx.fillText('CHAME NO DIRECT PARA O VALOR', W / 2, ctaY + 60);
+        ctx.font = '600 32px "IBM Plex Mono", monospace';
+        ctx.fillText('CHAME NO DIRECT PARA O VALOR', W / 2, ctaY + 57);
       }
 
       // footer divider + domain
       ctx.strokeStyle = '#2a2a30';
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(90, 1330);
-      ctx.lineTo(W - 90, 1330);
+      ctx.moveTo(90, 1350);
+      ctx.lineTo(W - 90, 1350);
       ctx.stroke();
 
       ctx.textAlign = 'left';
       ctx.fillStyle = '#5c5c63';
-      ctx.font = '500 26px "IBM Plex Mono", monospace';
-      ctx.fillText('catalogodecartasgraduadas.com.br', 90, 1380);
+      ctx.font = '500 25px "IBM Plex Mono", monospace';
+      ctx.fillText('catalogodecartasgraduadas.com.br', 90, 1396);
 
       if (it.cert) {
         ctx.textAlign = 'right';
         ctx.fillStyle = '#5c5c63';
-        ctx.fillText('CERT ' + it.cert, W - 90, 1380);
+        ctx.fillText('CERT ' + it.cert, W - 90, 1396);
       }
 
       return new Promise(function (resolve, reject) {
@@ -190,27 +184,13 @@
     });
   }
 
-  function wrapText(ctx, text, x, y, maxWidth, lineHeight, draw) {
-    var words = text.split(' ');
-    var line = '';
-    var lines = [];
-    for (var n = 0; n < words.length; n++) {
-      var testLine = line + words[n] + ' ';
-      if (ctx.measureText(testLine).width > maxWidth && n > 0) {
-        lines.push(line);
-        line = words[n] + ' ';
-      } else {
-        line = testLine;
-      }
+  function fitText(ctx, text, maxWidth) {
+    if (ctx.measureText(text).width <= maxWidth) return text;
+    var truncated = text;
+    while (truncated.length > 1 && ctx.measureText(truncated + '…').width > maxWidth) {
+      truncated = truncated.slice(0, -1);
     }
-    lines.push(line);
-    lines = lines.slice(0, 2);
-    if (draw) {
-      for (var i = 0; i < lines.length; i++) {
-        ctx.fillText(lines[i].trim(), x, y + i * lineHeight);
-      }
-    }
-    return lines.length;
+    return truncated.trim() + '…';
   }
 
   var pathMatch = location.pathname.match(/\/c\/([^/]+)/);
