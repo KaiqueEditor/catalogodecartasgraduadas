@@ -293,6 +293,10 @@
             '<div class="detail-pricebox">' + priceBlock + '</div>' +
             certRow +
             '<div class="admin-only admin-panel">' +
+              '<div class="price-edit-row">' +
+                '<input type="number" id="priceEditInput" class="price-edit-input" placeholder="USD, deixe vazio p/ sob consulta" value="' + (it.usd != null ? it.usd : '') + '" min="0" step="1">' +
+                '<button type="button" id="priceEditBtn" class="detail-btn price-edit-btn">Salvar preco</button>' +
+              '</div>' +
               '<button type="button" id="soldToggleBtn" class="detail-btn sold-toggle-btn">' + (it.sold ? 'Desmarcar vendido' : 'Marcar como vendido') + '</button>' +
               '<label class="sold-stamp-check"><input type="checkbox" id="soldStampCheck"' + (it.sold ? ' checked' : '') + '> Incluir carimbo SOLD no PNG</label>' +
               '<div class="ig-btn-row">' +
@@ -426,6 +430,47 @@
             window.alert('Erro ao salvar: ' + err.message + '\n\n(Isso so funciona depois que GITHUB_TOKEN e ADMIN_PASSWORD forem configurados na Vercel.)');
             soldBtn.disabled = false;
             soldBtn.textContent = it.sold ? 'Desmarcar vendido' : 'Marcar como vendido';
+          });
+        });
+      }
+
+      // ---- Edit price (persists to data.json via GitHub, site-wide) ----
+      var priceEditBtn = document.getElementById('priceEditBtn');
+      var priceEditInput = document.getElementById('priceEditInput');
+      if (priceEditBtn) {
+        priceEditBtn.addEventListener('click', function () {
+          var raw = priceEditInput.value.trim();
+          var newUsd = raw === '' ? null : Number(raw);
+          if (raw !== '' && (isNaN(newUsd) || newUsd < 0)) {
+            window.alert('Valor invalido.');
+            return;
+          }
+          var pw = (window.AdminAuth && window.AdminAuth.getPassword()) || window.prompt('Senha admin:');
+          if (!pw) return;
+          priceEditBtn.disabled = true;
+          var originalLabel = priceEditBtn.textContent;
+          priceEditBtn.textContent = 'Salvando…';
+          fetch('/api/update-price', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: pw, cert: it.cert || it.id, usd: newUsd }),
+          }).then(function (r) {
+            if (!r.ok) return r.json().then(function (j) { throw new Error(j.error || 'Falhou'); });
+            return r.json();
+          }).then(function (data) {
+            it.usd = data.usd;
+            it.brl = data.brl;
+            var priceBox = root.querySelector('.detail-pricebox');
+            priceBox.innerHTML = it.brl != null
+              ? '<div class="detail-price-usd">' + usd(it.usd) + '</div><div class="detail-price-brl">' + brl(it.brl) + '</div>'
+              : '<div class="price-consult">Price on request</div>';
+            priceEditBtn.textContent = originalLabel;
+            priceEditBtn.disabled = false;
+          }).catch(function (err) {
+            console.error(err);
+            window.alert('Erro ao salvar: ' + err.message);
+            priceEditBtn.textContent = originalLabel;
+            priceEditBtn.disabled = false;
           });
         });
       }
