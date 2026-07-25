@@ -80,15 +80,15 @@
       ctx.fillStyle = '#0e0e0e';
       ctx.fillRect(0, 0, W, H);
 
-      // slab image with generous breathing room — no frame, no badge on top
-      // of it, the physical slab already shows its own grade
+      // slab image, as large as possible — the text block overlaps its lower
+      // portion on top of a gradient fade, so there's no hard-edged seam
       var marginX = 90;
       var topMargin = 90;
       var bottomMargin = 60;
       var footerH = 34;
-      var infoH = 58 + 34 + (showPrice ? 100 : 0);
+      var overlapReserve = showPrice ? 210 : 90;
       var boxX = marginX, boxY = topMargin, boxW = W - marginX * 2;
-      var boxH = H - topMargin - infoH - footerH - bottomMargin;
+      var boxH = H - topMargin - footerH - bottomMargin - overlapReserve;
 
       var scale = Math.min(boxW / cardImg.width, boxH / cardImg.height);
       var drawW = cardImg.width * scale, drawH = cardImg.height * scale;
@@ -102,35 +102,45 @@
         ctx.fillRect(drawX, drawY, drawW, drawH);
       }
 
+      // gradient fade at the bottom of the photo so it blends into the
+      // background instead of ending in a hard line
+      var fadeH = drawH * 0.4;
+      var fadeGrad = ctx.createLinearGradient(0, drawY + drawH - fadeH, 0, drawY + drawH);
+      fadeGrad.addColorStop(0, 'rgba(14,14,14,0)');
+      fadeGrad.addColorStop(1, 'rgba(14,14,14,1)');
+      ctx.fillStyle = fadeGrad;
+      ctx.fillRect(drawX, drawY + drawH - fadeH, drawW, fadeH);
+
       if (sold) {
         drawSoldStamp(ctx, drawX + drawW / 2, drawY + drawH / 2, drawW * 0.8, 176);
       }
 
-      var y = boxY + boxH + 56;
+      // name + details overlap the faded bottom of the photo
+      var y = drawY + drawH - (showPrice ? 156 : 40);
 
       ctx.textAlign = 'left';
       ctx.fillStyle = '#f1ede2';
-      ctx.font = '700 44px Oswald, sans-serif';
+      ctx.font = '700 52px Oswald, sans-serif';
       ctx.fillText(fitText(ctx, it.nome.toUpperCase(), W - marginX * 2), marginX, y);
 
-      y += 34;
-      ctx.fillStyle = '#8d8d95';
-      ctx.font = '400 21px "IBM Plex Sans", sans-serif';
+      y += 38;
+      ctx.fillStyle = '#a9a9ae';
+      ctx.font = '400 23px "IBM Plex Sans", sans-serif';
       ctx.fillText(fitText(ctx, it.det, W - marginX * 2), marginX, y);
 
       if (showPrice) {
-        y += 66;
+        y += 74;
         if (it.brl != null) {
           ctx.fillStyle = '#4fae74';
-          ctx.font = '700 64px "IBM Plex Mono", monospace';
+          ctx.font = '700 72px "IBM Plex Mono", monospace';
           ctx.fillText(brl(it.brl), marginX, y);
 
-          ctx.fillStyle = '#5c5c63';
-          ctx.font = '500 24px "IBM Plex Mono", monospace';
-          ctx.fillText(usd(it.usd), marginX + 2, y + 32);
+          ctx.fillStyle = '#8d8d95';
+          ctx.font = '500 26px "IBM Plex Mono", monospace';
+          ctx.fillText(usd(it.usd), marginX + 2, y + 34);
         } else {
           ctx.fillStyle = '#8d8d95';
-          ctx.font = 'italic 400 30px "IBM Plex Sans", sans-serif';
+          ctx.font = 'italic 400 32px "IBM Plex Sans", sans-serif';
           ctx.fillText('Price on request', marginX, y);
         }
       }
