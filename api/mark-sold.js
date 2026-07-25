@@ -1,7 +1,9 @@
 // Serverless function (Vercel/Node). Verifies the admin password server-side,
 // then commits the updated data.json straight to the GitHub repo via the
-// GitHub REST API using a repo-scoped token stored as an env var. Vercel
-// auto-redeploys on push, so the change goes live for every visitor.
+// GitHub REST API using a repo-scoped token stored as an env var. The site
+// reads data through /api/data.js, which proxies GitHub live on every
+// request, so this commit is visible to everyone immediately — no redeploy
+// needed (this project isn't Git-connected on Vercel's side).
 
 const OWNER = 'KaiqueEditor';
 const REPO = 'catalogodecartasgraduadas';

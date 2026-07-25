@@ -168,7 +168,7 @@
     render();
   });
 
-  fetch('data.json?t=' + Date.now(), { cache: 'no-store' })
+  fetch('/api/data?t=' + Date.now(), { cache: 'no-store' })
     .then(function (r) { return r.json(); })
     .then(function (json) {
       DATA = json.itens;

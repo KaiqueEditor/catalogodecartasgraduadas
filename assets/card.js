@@ -217,7 +217,7 @@
   var params = new URLSearchParams(location.search);
   var id = slug ? null : parseInt(params.get('id'), 10);
 
-  fetch('data.json?t=' + Date.now(), { cache: 'no-store' })
+  fetch('/api/data?t=' + Date.now(), { cache: 'no-store' })
     .then(function (r) { return r.json(); })
     .then(function (json) {
       var it = slug
@@ -274,10 +274,11 @@
             '<div class="admin-only admin-panel">' +
               '<div class="price-edit-row">' +
                 '<input type="number" id="priceEditInput" class="price-edit-input" placeholder="USD, deixe vazio p/ sob consulta" value="' + (it.usd != null ? it.usd : '') + '" min="0" step="1">' +
-                '<button type="button" id="priceEditBtn" class="detail-btn price-edit-btn">Salvar preco</button>' +
               '</div>' +
-              '<button type="button" id="soldToggleBtn" class="detail-btn sold-toggle-btn">' + (it.sold ? 'Desmarcar vendido' : 'Marcar como vendido') + '</button>' +
+              '<label class="sold-stamp-check"><input type="checkbox" id="soldCheck"' + (it.sold ? ' checked' : '') + '> Marcar como vendido</label>' +
               '<label class="sold-stamp-check"><input type="checkbox" id="soldStampCheck"' + (it.sold ? ' checked' : '') + '> Incluir carimbo SOLD no PNG</label>' +
+              '<button type="button" id="saveChangesBtn" class="detail-btn price-edit-btn">Salvar alterações</button>' +
+              '<div id="saveStatus" class="save-status"></div>' +
               '<div class="ig-btn-row">' +
                 '<button type="button" id="igDownloadBtn" class="detail-btn ig-btn" data-mode="price">&#8681; Download with price</button>' +
                 '<button type="button" id="igDownloadCtaBtn" class="detail-btn ig-btn" data-mode="cta">&#8681; Download (call to DM)</button>' +
@@ -397,84 +398,97 @@
         });
       });
 
-      // ---- Mark as sold (persists to data.json via GitHub, site-wide) ----
-      var soldBtn = document.getElementById('soldToggleBtn');
-      if (soldBtn) {
-        soldBtn.addEventListener('click', function () {
-          var nextSold = !it.sold;
-          var pw = (window.AdminAuth && window.AdminAuth.getPassword()) || window.prompt('Senha admin:');
-          if (!pw) return;
-          soldBtn.disabled = true;
-          soldBtn.textContent = 'Salvando…';
-          fetch('/api/mark-sold', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password: pw, cert: it.cert || it.id, sold: nextSold }),
-          }).then(function (r) {
-            if (!r.ok) return r.json().then(function (j) { throw new Error(j.error || 'Falhou'); });
-            return r.json();
-          }).then(function () {
-            it.sold = nextSold;
-            soldBtn.textContent = nextSold ? 'Desmarcar vendido' : 'Marcar como vendido';
-            soldBtn.disabled = false;
-            if (soldStampCheck) soldStampCheck.checked = nextSold;
-            var imgwrap = root.querySelector('.detail-imgwrap');
-            imgwrap.classList.toggle('is-sold', nextSold);
-            var existingBadge = root.querySelector('.sold-badge');
-            if (nextSold && !existingBadge) {
-              var badge = document.createElement('div');
-              badge.className = 'sold-badge';
-              badge.innerHTML = '<span>SOLD</span>';
-              imgwrap.appendChild(badge);
-            } else if (!nextSold && existingBadge) {
-              existingBadge.remove();
-            }
-          }).catch(function (err) {
-            console.error(err);
-            window.alert('Erro ao salvar: ' + err.message + '\n\n(Isso so funciona depois que GITHUB_TOKEN e ADMIN_PASSWORD forem configurados na Vercel.)');
-            soldBtn.disabled = false;
-            soldBtn.textContent = it.sold ? 'Desmarcar vendido' : 'Marcar como vendido';
-          });
-        });
-      }
-
-      // ---- Edit price (persists to data.json via GitHub, site-wide) ----
-      var priceEditBtn = document.getElementById('priceEditBtn');
+      // ---- Save changes (price + sold together, persists via GitHub, site-wide) ----
+      // A single button so nothing gets forgotten mid-edit — important when
+      // updating from a phone: one tap, one password prompt, one save.
+      var saveBtn = document.getElementById('saveChangesBtn');
       var priceEditInput = document.getElementById('priceEditInput');
-      if (priceEditBtn) {
-        priceEditBtn.addEventListener('click', function () {
+      var soldCheck = document.getElementById('soldCheck');
+      var saveStatus = document.getElementById('saveStatus');
+
+      if (saveBtn) {
+        saveBtn.addEventListener('click', function () {
           var raw = priceEditInput.value.trim();
           var newUsd = raw === '' ? null : Number(raw);
           if (raw !== '' && (isNaN(newUsd) || newUsd < 0)) {
             window.alert('Valor invalido.');
             return;
           }
+          var nextSold = soldCheck.checked;
+          var priceChanged = newUsd !== it.usd;
+          var soldChanged = nextSold !== !!it.sold;
+
+          if (!priceChanged && !soldChanged) {
+            saveStatus.textContent = 'Nada para salvar.';
+            saveStatus.className = 'save-status';
+            return;
+          }
+
           var pw = (window.AdminAuth && window.AdminAuth.getPassword()) || window.prompt('Senha admin:');
           if (!pw) return;
-          priceEditBtn.disabled = true;
-          var originalLabel = priceEditBtn.textContent;
-          priceEditBtn.textContent = 'Salvando…';
-          fetch('/api/update-price', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password: pw, cert: it.cert || it.id, usd: newUsd }),
-          }).then(function (r) {
-            if (!r.ok) return r.json().then(function (j) { throw new Error(j.error || 'Falhou'); });
-            return r.json();
-          }).then(function (data) {
-            it.usd = data.usd;
-            it.brl = data.brl;
-            var priceBox = root.querySelector('.detail-pricebox');
-            priceBox.innerHTML = it.brl != null
-              ? '<div class="detail-price-usd">' + usd(it.usd) + '</div><div class="detail-price-brl">' + brl(it.brl) + '</div>'
-              : '<div class="price-consult">Price on request</div>';
-            priceEditBtn.textContent = originalLabel;
-            priceEditBtn.disabled = false;
+
+          saveBtn.disabled = true;
+          saveStatus.className = 'save-status';
+          saveStatus.textContent = 'Salvando…';
+
+          var chain = Promise.resolve();
+
+          if (priceChanged) {
+            chain = chain.then(function () {
+              return fetch('/api/update-price', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: pw, cert: it.cert || it.id, usd: newUsd }),
+              }).then(function (r) {
+                if (!r.ok) return r.json().then(function (j) { throw new Error('Preco: ' + (j.error || 'falhou')); });
+                return r.json();
+              }).then(function (data) {
+                it.usd = data.usd;
+                it.brl = data.brl;
+                var priceBox = root.querySelector('.detail-pricebox');
+                priceBox.innerHTML = it.brl != null
+                  ? '<div class="detail-price-usd">' + usd(it.usd) + '</div><div class="detail-price-brl">' + brl(it.brl) + '</div>'
+                  : '<div class="price-consult">Price on request</div>';
+              });
+            });
+          }
+
+          if (soldChanged) {
+            chain = chain.then(function () {
+              return fetch('/api/mark-sold', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: pw, cert: it.cert || it.id, sold: nextSold }),
+              }).then(function (r) {
+                if (!r.ok) return r.json().then(function (j) { throw new Error('Vendido: ' + (j.error || 'falhou')); });
+                return r.json();
+              }).then(function () {
+                it.sold = nextSold;
+                if (soldStampCheck) soldStampCheck.checked = nextSold;
+                var imgwrap = root.querySelector('.detail-imgwrap');
+                imgwrap.classList.toggle('is-sold', nextSold);
+                var existingBadge = root.querySelector('.sold-badge');
+                if (nextSold && !existingBadge) {
+                  var badge = document.createElement('div');
+                  badge.className = 'sold-badge';
+                  badge.innerHTML = '<span>SOLD</span>';
+                  imgwrap.appendChild(badge);
+                } else if (!nextSold && existingBadge) {
+                  existingBadge.remove();
+                }
+              });
+            });
+          }
+
+          chain.then(function () {
+            saveBtn.disabled = false;
+            saveStatus.textContent = 'Salvo — já está no ar para todo mundo.';
+            saveStatus.className = 'save-status save-status-ok';
           }).catch(function (err) {
             console.error(err);
-            window.alert('Erro ao salvar: ' + err.message);
-            priceEditBtn.textContent = originalLabel;
-            priceEditBtn.disabled = false;
+            saveBtn.disabled = false;
+            saveStatus.textContent = 'Erro ao salvar: ' + err.message;
+            saveStatus.className = 'save-status save-status-err';
           });
         });
       }
