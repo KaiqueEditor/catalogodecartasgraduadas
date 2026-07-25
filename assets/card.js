@@ -83,10 +83,10 @@
       ctx.fillStyle = bgGrad;
       ctx.fillRect(0, 0, W, H);
 
-      // slab image, contain-fit inside as big a box as possible — nothing
-      // else competes with it, the slab owns the frame
-      var footerH = 46;
-      var infoH = 66 + (showPrice ? 112 : 0);
+      // slab image, contain-fit inside as big a box as possible — no frame,
+      // no border, just the photo. Nothing else competes with it.
+      var footerH = 44;
+      var infoH = 60 + 34 + (showPrice ? 106 : 0);
       var margin = 26;
       var boxX = margin, boxY = margin, boxW = W - margin * 2;
       var boxH = H - margin - footerH - infoH - margin;
@@ -95,32 +95,16 @@
       var drawW = cardImg.width * scale, drawH = cardImg.height * scale;
       var drawX = boxX + (boxW - drawW) / 2, drawY = boxY + (boxH - drawH) / 2;
 
-      // subtle radial glow behind the slab
-      var glow = ctx.createRadialGradient(boxX + boxW / 2, boxY + boxH / 2, 80, boxX + boxW / 2, boxY + boxH / 2, boxH * 0.65);
-      glow.addColorStop(0, 'rgba(198,161,91,0.14)');
-      glow.addColorStop(1, 'rgba(198,161,91,0)');
-      ctx.fillStyle = glow;
-      ctx.fillRect(0, 0, W, H);
-
-      ctx.save();
-      roundRect(ctx, drawX - 14, drawY - 14, drawW + 28, drawH + 28, 16);
-      ctx.fillStyle = '#050506';
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(198,161,91,0.5)';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      ctx.clip();
       if (sold) ctx.filter = 'grayscale(0.9) brightness(0.85)';
       ctx.drawImage(cardImg, drawX, drawY, drawW, drawH);
       ctx.filter = 'none';
       if (sold) {
         ctx.fillStyle = 'rgba(255,255,255,0.10)';
-        ctx.fillRect(drawX - 14, drawY - 14, drawW + 28, drawH + 28);
+        ctx.fillRect(drawX, drawY, drawW, drawH);
       }
-      ctx.restore();
 
       if (sold) {
-        drawSoldStamp(ctx, boxX + boxW / 2, boxY + boxH / 2, boxW * 0.72, 176);
+        drawSoldStamp(ctx, drawX + drawW / 2, drawY + drawH / 2, drawW * 0.8, 176);
       }
 
       // tiny grade badge, overlaid on the photo's top-right corner
@@ -130,7 +114,7 @@
       var gradeW = ctx.measureText(gradeText).width;
       var pillPad = 12, pillH = 30;
       var pillX = drawX + drawW - 14 - gradeW - pillPad * 2;
-      var pillY = drawY + 12;
+      var pillY = drawY + 14;
       roundRect(ctx, pillX, pillY, gradeW + pillPad * 2, pillH, pillH / 2);
       ctx.fillStyle = 'rgba(10,10,11,0.75)';
       ctx.fill();
@@ -141,26 +125,31 @@
       ctx.textAlign = 'center';
       ctx.fillText(gradeText, pillX + (gradeW + pillPad * 2) / 2, pillY + pillH / 2 + 6);
 
-      var y = boxY + boxH + 56;
+      var y = boxY + boxH + 50;
 
       ctx.textAlign = 'left';
       ctx.fillStyle = '#f1ede2';
-      ctx.font = '600 46px Oswald, sans-serif';
+      ctx.font = '600 42px Oswald, sans-serif';
       ctx.fillText(fitText(ctx, it.nome, W - margin * 2), margin, y);
 
+      y += 36;
+      ctx.fillStyle = '#8d8d95';
+      ctx.font = '400 22px "IBM Plex Sans", sans-serif';
+      ctx.fillText(fitText(ctx, it.det, W - margin * 2), margin, y);
+
       if (showPrice) {
-        y += 76;
+        y += 70;
         if (it.brl != null) {
           ctx.fillStyle = '#4fae74';
-          ctx.font = '700 72px "IBM Plex Mono", monospace';
+          ctx.font = '700 68px "IBM Plex Mono", monospace';
           ctx.fillText(brl(it.brl), margin, y);
 
           ctx.fillStyle = '#5c5c63';
-          ctx.font = '500 26px "IBM Plex Mono", monospace';
-          ctx.fillText(usd(it.usd), margin + 2, y + 36);
+          ctx.font = '500 25px "IBM Plex Mono", monospace';
+          ctx.fillText(usd(it.usd), margin + 2, y + 34);
         } else {
           ctx.fillStyle = '#8d8d95';
-          ctx.font = 'italic 400 34px "IBM Plex Sans", sans-serif';
+          ctx.font = 'italic 400 32px "IBM Plex Sans", sans-serif';
           ctx.fillText('Price on request', margin, y);
         }
       }
