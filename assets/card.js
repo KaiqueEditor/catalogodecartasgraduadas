@@ -67,7 +67,7 @@
     ctx.restore();
   }
 
-  function generateInstagramImage(it, imgSrc, mode, sold) {
+  function generateInstagramImage(it, imgSrc, mode, sold, faceSuffix) {
     var W = 1080, H = 1440;
     var showPrice = mode !== 'cta';
     return Promise.all([loadImage(imgSrc), document.fonts.ready]).then(function (res) {
@@ -83,24 +83,24 @@
       ctx.fillStyle = bgGrad;
       ctx.fillRect(0, 0, W, H);
 
-      // subtle radial glow behind the slab
-      var glow = ctx.createRadialGradient(W / 2, 540, 80, W / 2, 540, 620);
-      glow.addColorStop(0, 'rgba(198,161,91,0.16)');
-      glow.addColorStop(1, 'rgba(198,161,91,0)');
-      ctx.fillStyle = glow;
-      ctx.fillRect(0, 0, W, H);
+      // slab image, contain-fit inside as big a box as possible — nothing
+      // else competes with it, the slab owns the frame
+      var footerH = 46;
+      var infoH = 66 + (showPrice ? 112 : 0);
+      var margin = 26;
+      var boxX = margin, boxY = margin, boxW = W - margin * 2;
+      var boxH = H - margin - footerH - infoH - margin;
 
-      // tiny eyebrow, kept minimal so the slab owns the frame
-      ctx.fillStyle = '#e8c878';
-      ctx.font = '600 22px "IBM Plex Mono", monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText('GRADED COLLECTION', W / 2, 56);
-
-      // slab image, contain-fit inside a big box — the slab is the hero here
-      var boxX = 60, boxY = 78, boxW = W - 120, boxH = 960;
       var scale = Math.min(boxW / cardImg.width, boxH / cardImg.height);
       var drawW = cardImg.width * scale, drawH = cardImg.height * scale;
       var drawX = boxX + (boxW - drawW) / 2, drawY = boxY + (boxH - drawH) / 2;
+
+      // subtle radial glow behind the slab
+      var glow = ctx.createRadialGradient(boxX + boxW / 2, boxY + boxH / 2, 80, boxX + boxW / 2, boxY + boxH / 2, boxH * 0.65);
+      glow.addColorStop(0, 'rgba(198,161,91,0.14)');
+      glow.addColorStop(1, 'rgba(198,161,91,0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, W, H);
 
       ctx.save();
       roundRect(ctx, drawX - 14, drawY - 14, drawW + 28, drawH + 28, 16);
@@ -123,87 +123,58 @@
         drawSoldStamp(ctx, boxX + boxW / 2, boxY + boxH / 2, boxW * 0.72, 176);
       }
 
-      var y = boxY + boxH + 60;
-
-      // category + grade pill
-      ctx.textAlign = 'left';
-      ctx.fillStyle = '#8d8d95';
-      ctx.font = '500 23px "IBM Plex Mono", monospace';
-      ctx.fillText(it.cat.toUpperCase(), 90, y);
-
+      // tiny grade badge, overlaid on the photo's top-right corner
       ctx.textAlign = 'right';
       var gradeText = it.grade;
-      ctx.font = '600 23px "IBM Plex Mono", monospace';
+      ctx.font = '600 17px "IBM Plex Mono", monospace';
       var gradeW = ctx.measureText(gradeText).width;
-      var pillPad = 18, pillH = 42;
-      var pillX = W - 90 - gradeW - pillPad * 2;
-      roundRect(ctx, pillX, y - pillH + 12, gradeW + pillPad * 2, pillH, pillH / 2);
-      ctx.strokeStyle = 'rgba(198,161,91,0.45)';
-      ctx.lineWidth = 2;
+      var pillPad = 12, pillH = 30;
+      var pillX = drawX + drawW - 14 - gradeW - pillPad * 2;
+      var pillY = drawY + 12;
+      roundRect(ctx, pillX, pillY, gradeW + pillPad * 2, pillH, pillH / 2);
+      ctx.fillStyle = 'rgba(10,10,11,0.75)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(198,161,91,0.5)';
+      ctx.lineWidth = 1.5;
       ctx.stroke();
       ctx.fillStyle = '#e8c878';
       ctx.textAlign = 'center';
-      ctx.fillText(gradeText, pillX + (gradeW + pillPad * 2) / 2, y);
+      ctx.fillText(gradeText, pillX + (gradeW + pillPad * 2) / 2, pillY + pillH / 2 + 6);
 
-      y += 58;
+      var y = boxY + boxH + 56;
+
       ctx.textAlign = 'left';
       ctx.fillStyle = '#f1ede2';
-      ctx.font = '600 50px Oswald, sans-serif';
-      ctx.fillText(fitText(ctx, it.nome, W - 180), 90, y);
+      ctx.font = '600 46px Oswald, sans-serif';
+      ctx.fillText(fitText(ctx, it.nome, W - margin * 2), margin, y);
 
-      y += 82;
+      if (showPrice) {
+        y += 76;
+        if (it.brl != null) {
+          ctx.fillStyle = '#4fae74';
+          ctx.font = '700 72px "IBM Plex Mono", monospace';
+          ctx.fillText(brl(it.brl), margin, y);
 
-      if (showPrice && it.brl != null) {
-        ctx.textAlign = 'left';
-        ctx.fillStyle = '#4fae74';
-        ctx.font = '700 76px "IBM Plex Mono", monospace';
-        ctx.fillText(brl(it.brl), 90, y);
-
-        ctx.fillStyle = '#5c5c63';
-        ctx.font = '500 27px "IBM Plex Mono", monospace';
-        ctx.fillText(usd(it.usd), 92, y + 38);
-      } else if (showPrice) {
-        ctx.textAlign = 'left';
-        ctx.fillStyle = '#8d8d95';
-        ctx.font = 'italic 400 36px "IBM Plex Sans", sans-serif';
-        ctx.fillText('Price on request', 90, y);
-      } else {
-        // call-to-action banner instead of a price
-        var ctaW = W - 180, ctaH = 90;
-        var ctaY = y - 60;
-        roundRect(ctx, 90, ctaY, ctaW, ctaH, 14);
-        var ctaGrad = ctx.createLinearGradient(90, 0, 90 + ctaW, 0);
-        ctaGrad.addColorStop(0, 'rgba(232,200,120,0.10)');
-        ctaGrad.addColorStop(1, 'rgba(232,200,120,0.04)');
-        ctx.fillStyle = ctaGrad;
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(232,200,120,0.55)';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        ctx.textAlign = 'center';
-        ctx.fillStyle = '#e8c878';
-        ctx.font = '600 32px "IBM Plex Mono", monospace';
-        ctx.fillText('CHAME NO DIRECT PARA O VALOR', W / 2, ctaY + 57);
+          ctx.fillStyle = '#5c5c63';
+          ctx.font = '500 26px "IBM Plex Mono", monospace';
+          ctx.fillText(usd(it.usd), margin + 2, y + 36);
+        } else {
+          ctx.fillStyle = '#8d8d95';
+          ctx.font = 'italic 400 34px "IBM Plex Sans", sans-serif';
+          ctx.fillText('Price on request', margin, y);
+        }
       }
 
-      // footer divider + domain
-      ctx.strokeStyle = '#2a2a30';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(90, 1350);
-      ctx.lineTo(W - 90, 1350);
-      ctx.stroke();
-
+      // footer: tiny domain + cert
       ctx.textAlign = 'left';
-      ctx.fillStyle = '#5c5c63';
-      ctx.font = '500 25px "IBM Plex Mono", monospace';
-      ctx.fillText('catalogodecartasgraduadas.com.br', 90, 1396);
+      ctx.fillStyle = '#4a4a50';
+      ctx.font = '500 18px "IBM Plex Mono", monospace';
+      ctx.fillText('catalogodecartasgraduadas.com.br', margin, H - 20);
 
       if (it.cert) {
         ctx.textAlign = 'right';
-        ctx.fillStyle = '#5c5c63';
-        ctx.fillText('CERT ' + it.cert, W - 90, 1396);
+        ctx.fillStyle = '#4a4a50';
+        ctx.fillText('CERT ' + it.cert, W - margin, H - 20);
       }
 
       return new Promise(function (resolve, reject) {
@@ -211,9 +182,10 @@
           if (!blob) { reject(new Error('toBlob failed')); return; }
           var a = document.createElement('a');
           var slug = it.cert || ('p' + it.id);
-          var suffix = showPrice ? '' : '-direct';
+          var modeSuffix = showPrice ? '' : '-direct';
+          var faceSuf = faceSuffix ? '-' + faceSuffix : '';
           a.href = URL.createObjectURL(blob);
-          a.download = slug + '-' + it.nome.toLowerCase().replace(/[^a-z0-9]+/g, '-') + suffix + '.png';
+          a.download = slug + '-' + it.nome.toLowerCase().replace(/[^a-z0-9]+/g, '-') + modeSuffix + faceSuf + '.png';
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
@@ -373,7 +345,7 @@
         touchStartX = null;
       }, { passive: true });
 
-      // ---- Instagram PNG export ----
+      // ---- Instagram PNG export (downloads both sides for a carousel when available) ----
       var soldStampCheck = document.getElementById('soldStampCheck');
       root.querySelectorAll('.ig-btn').forEach(function (btn) {
         btn.addEventListener('click', function () {
@@ -382,7 +354,16 @@
           root.querySelectorAll('.ig-btn').forEach(function (b) { b.disabled = true; });
           var originalLabel = btn.textContent;
           btn.textContent = 'Generating…';
-          generateInstagramImage(it, img.src, mode, sold).then(function () {
+
+          var chain = generateInstagramImage(it, it.img_l, mode, sold, hasBack ? 'front' : null);
+          if (hasBack) {
+            chain = chain.then(function () {
+              return new Promise(function (r) { setTimeout(r, 500); });
+            }).then(function () {
+              return generateInstagramImage(it, it.img_back_l, mode, sold, 'back');
+            });
+          }
+          chain.then(function () {
             btn.textContent = originalLabel;
             root.querySelectorAll('.ig-btn').forEach(function (b) { b.disabled = false; });
           }).catch(function (err) {
