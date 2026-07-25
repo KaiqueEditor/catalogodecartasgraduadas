@@ -90,33 +90,41 @@
       var boxX = marginX, boxY = topMargin, boxW = W - marginX * 2;
       var boxH = H - topMargin - footerH - bottomMargin - overlapReserve;
 
-      var scale = Math.min(boxW / cardImg.width, boxH / cardImg.height);
+      // zoom in past "contain" so the card's own black side-borders get
+      // cropped off by the box edges — the readable part is what matters
+      var zoom = 1.22;
+      var scale = Math.min(boxW / cardImg.width, boxH / cardImg.height) * zoom;
       var drawW = cardImg.width * scale, drawH = cardImg.height * scale;
       var drawX = boxX + (boxW - drawW) / 2, drawY = boxY + (boxH - drawH) / 2;
 
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(boxX, boxY, boxW, boxH);
+      ctx.clip();
       if (sold) ctx.filter = 'grayscale(0.9) brightness(0.85)';
       ctx.drawImage(cardImg, drawX, drawY, drawW, drawH);
       ctx.filter = 'none';
       if (sold) {
         ctx.fillStyle = 'rgba(255,255,255,0.10)';
-        ctx.fillRect(drawX, drawY, drawW, drawH);
+        ctx.fillRect(boxX, boxY, boxW, boxH);
       }
 
       // gradient fade at the bottom of the photo so it blends into the
       // background instead of ending in a hard line
-      var fadeH = drawH * 0.4;
-      var fadeGrad = ctx.createLinearGradient(0, drawY + drawH - fadeH, 0, drawY + drawH);
+      var fadeH = boxH * 0.32;
+      var fadeGrad = ctx.createLinearGradient(0, boxY + boxH - fadeH, 0, boxY + boxH);
       fadeGrad.addColorStop(0, 'rgba(14,14,14,0)');
       fadeGrad.addColorStop(1, 'rgba(14,14,14,1)');
       ctx.fillStyle = fadeGrad;
-      ctx.fillRect(drawX, drawY + drawH - fadeH, drawW, fadeH);
+      ctx.fillRect(boxX, boxY + boxH - fadeH, boxW, fadeH);
+      ctx.restore();
 
       if (sold) {
-        drawSoldStamp(ctx, drawX + drawW / 2, drawY + drawH / 2, drawW * 0.8, 176);
+        drawSoldStamp(ctx, boxX + boxW / 2, boxY + boxH / 2, boxW * 0.8, 176);
       }
 
       // name + details overlap the faded bottom of the photo
-      var y = drawY + drawH - (showPrice ? 156 : 40);
+      var y = boxY + boxH - (showPrice ? 156 : 40);
 
       ctx.textAlign = 'left';
       ctx.fillStyle = '#f1ede2';
