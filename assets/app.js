@@ -45,7 +45,7 @@
         '<div class="card-imgwrap' + (it.sold ? ' is-sold' : '') + '">' +
           '<img src="' + it.img_s + '" srcset="' + it.img_s + ' 380w, ' + it.img_l + ' 760w" ' +
                'sizes="(min-width:920px) 360px, 45vw" ' +
-               'loading="lazy" decoding="async" alt="' + esc(it.nome) + '">' +
+               'decoding="async" alt="' + esc(it.nome) + '">' +
           oficial +
           featureTag +
           soldBadge +
@@ -103,20 +103,15 @@
   }
 
   function revealCards() {
+    // Cards used to fade in only once scrolled into view (IntersectionObserver).
+    // That leaves everything below the fold invisible (opacity:0) for anything
+    // that renders the page without actually scrolling through it — e.g. a
+    // phone's full-page screenshot capture. Show everything immediately
+    // instead; a tiny stagger on initial paint still gives the fade-in feel.
     var cards = document.querySelectorAll('.card:not(.show)');
-    if (!('IntersectionObserver' in window)) {
-      cards.forEach(function (c) { c.classList.add('show'); });
-      return;
-    }
-    var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry, idx) {
-        if (entry.isIntersecting) {
-          setTimeout(function () { entry.target.classList.add('show'); }, (idx % 9) * 40);
-          io.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.05, rootMargin: '80px' });
-    cards.forEach(function (c) { io.observe(c); });
+    cards.forEach(function (c, idx) {
+      setTimeout(function () { c.classList.add('show'); }, (idx % 9) * 30);
+    });
   }
 
   function renderSubChips() {

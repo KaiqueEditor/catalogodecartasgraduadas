@@ -249,8 +249,6 @@ body{
   border:1px solid var(--hair);
   border-radius:var(--radius);
   overflow:hidden;
-  content-visibility:auto;
-  contain-intrinsic-size:340px;
   opacity:0; transform:translateY(12px);
   transition:transform 0.2s ease, border-color 0.2s ease;
   position:relative;
