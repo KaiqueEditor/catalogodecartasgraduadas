@@ -17,6 +17,178 @@
     return it.cert ? it.cert : 'p' + it.id;
   }
 
+  function loadImage(src) {
+    return new Promise(function (resolve, reject) {
+      var image = new Image();
+      image.crossOrigin = 'anonymous';
+      image.onload = function () { resolve(image); };
+      image.onerror = reject;
+      image.src = src;
+    });
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function generateInstagramImage(it, imgSrc) {
+    var W = 1080, H = 1440;
+    return Promise.all([loadImage(imgSrc), document.fonts.ready]).then(function (res) {
+      var cardImg = res[0];
+      var canvas = document.createElement('canvas');
+      canvas.width = W; canvas.height = H;
+      var ctx = canvas.getContext('2d');
+
+      // background
+      var bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+      bgGrad.addColorStop(0, '#101012');
+      bgGrad.addColorStop(1, '#0a0a0b');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, W, H);
+
+      // subtle radial glow behind the slab
+      var glow = ctx.createRadialGradient(W / 2, 560, 80, W / 2, 560, 620);
+      glow.addColorStop(0, 'rgba(198,161,91,0.16)');
+      glow.addColorStop(1, 'rgba(198,161,91,0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, W, H);
+
+      // eyebrow
+      ctx.fillStyle = '#e8c878';
+      ctx.font = '600 26px "IBM Plex Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('GRADED COLLECTION', W / 2, 90);
+
+      // slab image, contain-fit inside box
+      var boxX = 90, boxY = 140, boxW = W - 180, boxH = 860;
+      var scale = Math.min(boxW / cardImg.width, boxH / cardImg.height);
+      var drawW = cardImg.width * scale, drawH = cardImg.height * scale;
+      var drawX = boxX + (boxW - drawW) / 2, drawY = boxY + (boxH - drawH) / 2;
+
+      ctx.save();
+      roundRect(ctx, drawX - 16, drawY - 16, drawW + 32, drawH + 32, 18);
+      ctx.fillStyle = '#050506';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(198,161,91,0.5)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.clip();
+      ctx.drawImage(cardImg, drawX, drawY, drawW, drawH);
+      ctx.restore();
+
+      var y = boxY + boxH + 70;
+
+      // category + grade pill
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#8d8d95';
+      ctx.font = '500 24px "IBM Plex Mono", monospace';
+      ctx.fillText(it.cat.toUpperCase(), 90, y);
+
+      ctx.textAlign = 'right';
+      var gradeText = it.grade;
+      ctx.font = '600 24px "IBM Plex Mono", monospace';
+      var gradeW = ctx.measureText(gradeText).width;
+      var pillPad = 20, pillH = 44;
+      var pillX = W - 90 - gradeW - pillPad * 2;
+      roundRect(ctx, pillX, y - pillH + 12, gradeW + pillPad * 2, pillH, pillH / 2);
+      ctx.strokeStyle = 'rgba(198,161,91,0.45)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.fillStyle = '#e8c878';
+      ctx.textAlign = 'center';
+      ctx.fillText(gradeText, pillX + (gradeW + pillPad * 2) / 2, y);
+
+      y += 66;
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#f1ede2';
+      ctx.font = '600 58px Oswald, sans-serif';
+      ctx.fillText(it.nome, 90, y);
+
+      y += 46;
+      ctx.fillStyle = '#8d8d95';
+      ctx.font = '400 26px "IBM Plex Sans", sans-serif';
+      wrapText(ctx, it.det, 90, y, W - 180, 34);
+
+      // price block
+      var priceY = 1230;
+      if (it.brl != null) {
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#4fae74';
+        ctx.font = '700 84px "IBM Plex Mono", monospace';
+        ctx.fillText(brl(it.brl), 90, priceY);
+
+        ctx.fillStyle = '#5c5c63';
+        ctx.font = '500 30px "IBM Plex Mono", monospace';
+        ctx.fillText(usd(it.usd), 92, priceY + 42);
+      } else {
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#8d8d95';
+        ctx.font = 'italic 400 40px "IBM Plex Sans", sans-serif';
+        ctx.fillText('Price on request', 90, priceY);
+      }
+
+      // footer divider + domain
+      ctx.strokeStyle = '#2a2a30';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(90, 1330);
+      ctx.lineTo(W - 90, 1330);
+      ctx.stroke();
+
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#5c5c63';
+      ctx.font = '500 26px "IBM Plex Mono", monospace';
+      ctx.fillText('catalogodecartasgraduadas.com.br', 90, 1380);
+
+      if (it.cert) {
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#5c5c63';
+        ctx.fillText('CERT ' + it.cert, W - 90, 1380);
+      }
+
+      return new Promise(function (resolve, reject) {
+        canvas.toBlob(function (blob) {
+          if (!blob) { reject(new Error('toBlob failed')); return; }
+          var a = document.createElement('a');
+          var slug = it.cert || ('p' + it.id);
+          a.href = URL.createObjectURL(blob);
+          a.download = slug + '-' + it.nome.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.png';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+          resolve();
+        }, 'image/png');
+      });
+    });
+  }
+
+  function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+    var words = text.split(' ');
+    var line = '';
+    var lines = [];
+    for (var n = 0; n < words.length; n++) {
+      var testLine = line + words[n] + ' ';
+      if (ctx.measureText(testLine).width > maxWidth && n > 0) {
+        lines.push(line);
+        line = words[n] + ' ';
+      } else {
+        line = testLine;
+      }
+    }
+    lines.push(line);
+    lines = lines.slice(0, 2);
+    for (var i = 0; i < lines.length; i++) {
+      ctx.fillText(lines[i].trim(), x, y + i * lineHeight);
+    }
+  }
+
   var pathMatch = location.pathname.match(/\/c\/([^/]+)/);
   var slug = root.dataset.slug || (pathMatch ? decodeURIComponent(pathMatch[1]) : null);
   var params = new URLSearchParams(location.search);
@@ -75,6 +247,7 @@
             '<p class="detail-det">' + esc(it.det) + '</p>' +
             '<div class="detail-pricebox">' + priceBlock + '</div>' +
             certRow +
+            '<button type="button" id="igDownloadBtn" class="detail-btn ig-btn">&#8681; Download for Instagram</button>' +
           '</div>' +
         '</div>' +
         about +
@@ -143,6 +316,22 @@
         if (Math.abs(dx) > 50) setFace(currentFace === 'front' ? 'back' : 'front');
         touchStartX = null;
       }, { passive: true });
+
+      // ---- Instagram PNG export ----
+      var igBtn = document.getElementById('igDownloadBtn');
+      igBtn.addEventListener('click', function () {
+        igBtn.disabled = true;
+        var originalLabel = igBtn.textContent;
+        igBtn.textContent = 'Generating…';
+        generateInstagramImage(it, img.src).then(function () {
+          igBtn.textContent = originalLabel;
+          igBtn.disabled = false;
+        }).catch(function (err) {
+          console.error(err);
+          igBtn.textContent = 'Failed — try again';
+          igBtn.disabled = false;
+        });
+      });
     })
     .catch(function (err) {
       root.innerHTML = '<div class="detail-loading">Could not load this card. <a href="index.html">Go back</a>.</div>';
