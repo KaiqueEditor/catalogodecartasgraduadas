@@ -76,20 +76,19 @@
       canvas.width = W; canvas.height = H;
       var ctx = canvas.getContext('2d');
 
-      // background
-      var bgGrad = ctx.createLinearGradient(0, 0, 0, H);
-      bgGrad.addColorStop(0, '#101012');
-      bgGrad.addColorStop(1, '#0a0a0b');
-      ctx.fillStyle = bgGrad;
+      // flat background — no gradient, no glow, keep it plain like a product shot
+      ctx.fillStyle = '#0e0e0e';
       ctx.fillRect(0, 0, W, H);
 
-      // slab image, contain-fit inside as big a box as possible — no frame,
-      // no border, just the photo. Nothing else competes with it.
-      var footerH = 44;
-      var infoH = 60 + 34 + (showPrice ? 106 : 0);
-      var margin = 26;
-      var boxX = margin, boxY = margin, boxW = W - margin * 2;
-      var boxH = H - margin - footerH - infoH - margin;
+      // slab image with generous breathing room — no frame, no badge on top
+      // of it, the physical slab already shows its own grade
+      var marginX = 90;
+      var topMargin = 90;
+      var bottomMargin = 60;
+      var footerH = 34;
+      var infoH = 58 + 34 + (showPrice ? 100 : 0);
+      var boxX = marginX, boxY = topMargin, boxW = W - marginX * 2;
+      var boxH = H - topMargin - infoH - footerH - bottomMargin;
 
       var scale = Math.min(boxW / cardImg.width, boxH / cardImg.height);
       var drawW = cardImg.width * scale, drawH = cardImg.height * scale;
@@ -107,63 +106,45 @@
         drawSoldStamp(ctx, drawX + drawW / 2, drawY + drawH / 2, drawW * 0.8, 176);
       }
 
-      // tiny grade badge, overlaid on the photo's top-right corner
-      ctx.textAlign = 'right';
-      var gradeText = it.grade;
-      ctx.font = '600 17px "IBM Plex Mono", monospace';
-      var gradeW = ctx.measureText(gradeText).width;
-      var pillPad = 12, pillH = 30;
-      var pillX = drawX + drawW - 14 - gradeW - pillPad * 2;
-      var pillY = drawY + 14;
-      roundRect(ctx, pillX, pillY, gradeW + pillPad * 2, pillH, pillH / 2);
-      ctx.fillStyle = 'rgba(10,10,11,0.75)';
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(198,161,91,0.5)';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-      ctx.fillStyle = '#e8c878';
-      ctx.textAlign = 'center';
-      ctx.fillText(gradeText, pillX + (gradeW + pillPad * 2) / 2, pillY + pillH / 2 + 6);
-
-      var y = boxY + boxH + 50;
+      var y = boxY + boxH + 56;
 
       ctx.textAlign = 'left';
       ctx.fillStyle = '#f1ede2';
-      ctx.font = '600 42px Oswald, sans-serif';
-      ctx.fillText(fitText(ctx, it.nome, W - margin * 2), margin, y);
+      ctx.font = '700 44px Oswald, sans-serif';
+      ctx.fillText(fitText(ctx, it.nome.toUpperCase(), W - marginX * 2), marginX, y);
 
-      y += 36;
+      y += 34;
       ctx.fillStyle = '#8d8d95';
-      ctx.font = '400 22px "IBM Plex Sans", sans-serif';
-      ctx.fillText(fitText(ctx, it.det, W - margin * 2), margin, y);
+      ctx.font = '400 21px "IBM Plex Sans", sans-serif';
+      ctx.fillText(fitText(ctx, it.det, W - marginX * 2), marginX, y);
 
       if (showPrice) {
-        y += 70;
+        y += 66;
         if (it.brl != null) {
           ctx.fillStyle = '#4fae74';
-          ctx.font = '700 68px "IBM Plex Mono", monospace';
-          ctx.fillText(brl(it.brl), margin, y);
+          ctx.font = '700 64px "IBM Plex Mono", monospace';
+          ctx.fillText(brl(it.brl), marginX, y);
 
           ctx.fillStyle = '#5c5c63';
-          ctx.font = '500 25px "IBM Plex Mono", monospace';
-          ctx.fillText(usd(it.usd), margin + 2, y + 34);
+          ctx.font = '500 24px "IBM Plex Mono", monospace';
+          ctx.fillText(usd(it.usd), marginX + 2, y + 32);
         } else {
           ctx.fillStyle = '#8d8d95';
-          ctx.font = 'italic 400 32px "IBM Plex Sans", sans-serif';
-          ctx.fillText('Price on request', margin, y);
+          ctx.font = 'italic 400 30px "IBM Plex Sans", sans-serif';
+          ctx.fillText('Price on request', marginX, y);
         }
       }
 
       // footer: tiny domain + cert
       ctx.textAlign = 'left';
-      ctx.fillStyle = '#4a4a50';
-      ctx.font = '500 18px "IBM Plex Mono", monospace';
-      ctx.fillText('catalogodecartasgraduadas.com.br', margin, H - 20);
+      ctx.fillStyle = '#48484c';
+      ctx.font = '500 17px "IBM Plex Mono", monospace';
+      ctx.fillText('catalogodecartasgraduadas.com.br', marginX, H - bottomMargin + 24);
 
       if (it.cert) {
         ctx.textAlign = 'right';
-        ctx.fillStyle = '#4a4a50';
-        ctx.fillText('CERT ' + it.cert, W - margin, H - 20);
+        ctx.fillStyle = '#48484c';
+        ctx.fillText('CERT ' + it.cert, W - marginX, H - bottomMargin + 24);
       }
 
       return new Promise(function (resolve, reject) {
