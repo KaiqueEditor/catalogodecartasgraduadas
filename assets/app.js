@@ -93,25 +93,16 @@
     }
     grid.innerHTML = html;
     emptyState.style.display = list.length ? 'none' : 'block';
-    revealCards();
+    // No JS-driven reveal needed — cards fade in via a plain CSS animation
+    // on the .card rule itself (see style.css), so nothing depends on a
+    // timer or scroll position to become visible. That was the root cause
+    // of cards showing up blank in screenshots/PDF exports.
   }
 
   function uniqueCats(list) {
     var seen = [];
     list.forEach(function (it) { if (seen.indexOf(it.cat) === -1) seen.push(it.cat); });
     return seen;
-  }
-
-  function revealCards() {
-    // Cards used to fade in only once scrolled into view (IntersectionObserver).
-    // That leaves everything below the fold invisible (opacity:0) for anything
-    // that renders the page without actually scrolling through it — e.g. a
-    // phone's full-page screenshot capture. Show everything immediately
-    // instead; a tiny stagger on initial paint still gives the fade-in feel.
-    var cards = document.querySelectorAll('.card:not(.show)');
-    cards.forEach(function (c, idx) {
-      setTimeout(function () { c.classList.add('show'); }, (idx % 9) * 30);
-    });
   }
 
   function renderSubChips() {
