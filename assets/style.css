@@ -107,6 +107,27 @@ body{
 .hero-meta div{font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--ink-faint); letter-spacing:0.05em;}
 .hero-meta span{display:block; color:var(--ink); font-size:14px; margin-top:2px; font-weight:500;}
 
+.hero-seller{
+  display:flex; align-items:center; gap:11px;
+  margin-top:16px; padding:11px 14px;
+  background:rgba(255,255,255,0.03);
+  border:1px solid var(--hair);
+  border-radius:12px;
+  text-decoration:none;
+  transition:border-color .18s, background .18s, transform .18s;
+}
+@media (hover:hover){.hero-seller:hover{border-color:rgba(198,161,91,0.4); background:rgba(255,255,255,0.05); transform:translateY(-1px);}}
+.hero-seller-avatar{
+  flex-shrink:0; width:34px; height:34px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--chrome-gold); background-size:220% 100%;
+  color:#241a06; font-family:'Oswald',sans-serif; font-weight:600; font-size:15px;
+}
+.hero-seller-info{flex:1; min-width:0;}
+.hero-seller-name{display:block; color:var(--ink); font-size:13px; font-weight:600;}
+.hero-seller-phone{display:block; color:var(--ink-faint); font-family:'IBM Plex Mono',monospace; font-size:11.5px; margin-top:1px;}
+.hero-seller-icon{flex-shrink:0; width:20px; height:20px; color:#3fbf5f; opacity:0.85;}
+
 /* ---------- SEARCH / FILTER BAR ---------- */
 .searchbar-wrap{
   position:sticky; top:0; z-index:40;
