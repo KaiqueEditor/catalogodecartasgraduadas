@@ -270,23 +270,18 @@ body{
   border:1px solid var(--hair);
   border-radius:var(--radius);
   overflow:hidden;
-  content-visibility:auto;
-  contain-intrinsic-size:340px;
-  opacity:0; transform:translateY(12px);
-  transition:transform 0.2s ease, border-color 0.2s ease;
   position:relative;
+  /* Cards must be visible by default, with nothing — no JS class, no
+     content-visibility, no media query — required to make them show up.
+     Screenshot/print/PDF capture tools render the DOM as-is; anything that
+     depends on a JS timer or an intersection/scroll event ends up blank in
+     those captures, which is exactly what kept happening. The fade-in is
+     now a harmless one-shot CSS animation that plays on normal load and
+     can't leave content invisible if it doesn't run. */
+  animation:cardin 0.4s ease-out both;
 }
-.card.show{animation:cardin 0.5s cubic-bezier(.16,.8,.3,1) forwards;}
-@keyframes cardin{to{opacity:1; transform:translateY(0);}}
-@media (prefers-reduced-motion:reduce){.card{opacity:1; transform:none; animation:none;}}
-/* iOS Safari's "Full Page" screenshot renders the page through a print-like
-   pass. content-visibility:auto keeps normal scrolling light on memory (68
-   full-res card images all composited at once was likely why the Full Page
-   option stopped being offered at all), but it must not skip rendering when
-   that print pass happens, or cards below the fold end up blank again. */
-@media print{
-  .card{content-visibility:visible !important; opacity:1 !important; transform:none !important; animation:none !important; break-inside:avoid;}
-}
+@keyframes cardin{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);}}
+@media (prefers-reduced-motion:reduce){.card{animation:none;}}
 @media (hover:hover){.card:hover{border-color:#3a3a42; transform:translateY(-2px);}}
 .card.museum{border-color:rgba(198,161,91,0.35);}
 
