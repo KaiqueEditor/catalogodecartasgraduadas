@@ -86,7 +86,7 @@
       var topMargin = 90;
       var bottomMargin = 60;
       var footerH = 34;
-      var overlapReserve = showPrice ? 210 : 90;
+      var overlapReserve = showPrice ? 100 : 240;
       var boxX = marginX, boxY = topMargin, boxW = W - marginX * 2;
       var boxH = H - topMargin - footerH - bottomMargin - overlapReserve;
 
@@ -124,33 +124,52 @@
       }
 
       // name + details overlap the faded bottom of the photo
-      var y = boxY + boxH - (showPrice ? 156 : 40);
-
+      var boxBottom = boxY + boxH;
       ctx.textAlign = 'left';
-      ctx.fillStyle = '#f1ede2';
-      ctx.font = '700 52px Oswald, sans-serif';
-      ctx.fillText(fitText(ctx, it.nome.toUpperCase(), W - marginX * 2), marginX, y);
-
-      y += 38;
-      ctx.fillStyle = '#a9a9ae';
-      ctx.font = '400 23px "IBM Plex Sans", sans-serif';
-      ctx.fillText(fitText(ctx, it.det, W - marginX * 2), marginX, y);
 
       if (showPrice) {
-        y += 74;
+        var y = boxBottom - 148;
+        ctx.fillStyle = '#f1ede2';
+        ctx.font = '700 60px Oswald, sans-serif';
+        ctx.fillText(fitText(ctx, it.nome.toUpperCase(), W - marginX * 2), marginX, y);
+
+        y += 42;
+        ctx.fillStyle = '#a9a9ae';
+        ctx.font = '400 25px "IBM Plex Sans", sans-serif';
+        ctx.fillText(fitText(ctx, it.det, W - marginX * 2), marginX, y);
+
+        y += 30;
+        ctx.strokeStyle = 'rgba(241,237,226,0.15)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(marginX, y);
+        ctx.lineTo(W - marginX, y);
+        ctx.stroke();
+
+        y += 68;
         if (it.brl != null) {
           ctx.fillStyle = '#4fae74';
-          ctx.font = '700 72px "IBM Plex Mono", monospace';
+          ctx.font = '700 84px "IBM Plex Mono", monospace';
           ctx.fillText(brl(it.brl), marginX, y);
 
           ctx.fillStyle = '#8d8d95';
-          ctx.font = '500 26px "IBM Plex Mono", monospace';
-          ctx.fillText(usd(it.usd), marginX + 2, y + 34);
+          ctx.font = '500 27px "IBM Plex Mono", monospace';
+          ctx.fillText(usd(it.usd), marginX + 3, y + 38);
         } else {
           ctx.fillStyle = '#8d8d95';
-          ctx.font = 'italic 400 32px "IBM Plex Sans", sans-serif';
+          ctx.font = 'italic 400 34px "IBM Plex Sans", sans-serif';
           ctx.fillText('Price on request', marginX, y);
         }
+      } else {
+        var y = boxBottom + 96;
+        ctx.fillStyle = '#f1ede2';
+        ctx.font = '700 72px Oswald, sans-serif';
+        ctx.fillText(fitText(ctx, it.nome.toUpperCase(), W - marginX * 2), marginX, y);
+
+        y += 56;
+        ctx.fillStyle = '#a9a9ae';
+        ctx.font = '400 30px "IBM Plex Sans", sans-serif';
+        ctx.fillText(fitText(ctx, it.det, W - marginX * 2), marginX, y);
       }
 
       // footer: tiny domain + cert
