@@ -37,31 +37,33 @@
     ctx.closePath();
   }
 
-  function drawSoldStamp(ctx, cx, cy, radius) {
+  function drawSoldStamp(ctx, cx, cy, w, h) {
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate(-16 * Math.PI / 180);
 
-    ctx.beginPath();
-    ctx.arc(0, 0, radius, 0, Math.PI * 2);
-    ctx.setLineDash([16, 12]);
-    ctx.lineWidth = 7;
-    ctx.strokeStyle = 'rgba(214,40,40,0.92)';
-    ctx.stroke();
-    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(10,10,11,0.55)';
+    ctx.fillRect(-w / 2, -h / 2, w, h);
 
-    ctx.beginPath();
-    ctx.arc(0, 0, radius - 16, 0, Math.PI * 2);
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = 'rgba(214,40,40,0.92)';
-    ctx.stroke();
+    ctx.strokeStyle = 'rgba(214,40,40,0.95)';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(-w / 2, -h / 2, w, h);
+    ctx.lineWidth = 2;
+    ctx.strokeRect(-w / 2 + 12, -h / 2 + 12, w - 24, h - 24);
 
-    ctx.fillStyle = 'rgba(214,40,40,0.94)';
+    var dotR = 7;
+    [[-w / 2 + 20, -h / 2 + 20], [w / 2 - 20, -h / 2 + 20], [-w / 2 + 20, h / 2 - 20], [w / 2 - 20, h / 2 - 20]].forEach(function (p) {
+      ctx.beginPath();
+      ctx.arc(p[0], p[1], dotR, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(214,40,40,0.95)';
+      ctx.fill();
+    });
+
+    ctx.fillStyle = 'rgba(214,40,40,0.98)';
     ctx.textAlign = 'center';
-    ctx.font = '800 66px Oswald, sans-serif';
-    ctx.fillText('VENDIDO', 0, 20);
-    ctx.font = '600 24px "IBM Plex Mono", monospace';
-    ctx.fillText('S O L D  O U T', 0, 60);
+    ctx.textBaseline = 'middle';
+    ctx.font = '800 ' + Math.round(h * 0.55) + 'px Oswald, sans-serif';
+    ctx.fillText('SOLD', 0, 4);
     ctx.restore();
   }
 
@@ -108,11 +110,17 @@
       ctx.lineWidth = 2;
       ctx.stroke();
       ctx.clip();
+      if (sold) ctx.filter = 'grayscale(0.9) brightness(0.85)';
       ctx.drawImage(cardImg, drawX, drawY, drawW, drawH);
+      ctx.filter = 'none';
+      if (sold) {
+        ctx.fillStyle = 'rgba(255,255,255,0.10)';
+        ctx.fillRect(drawX - 14, drawY - 14, drawW + 28, drawH + 28);
+      }
       ctx.restore();
 
       if (sold) {
-        drawSoldStamp(ctx, boxX + boxW / 2, boxY + boxH / 2, Math.min(boxW, boxH) * 0.32);
+        drawSoldStamp(ctx, boxX + boxW / 2, boxY + boxH / 2, boxW * 0.72, 176);
       }
 
       var y = boxY + boxH + 60;
@@ -271,10 +279,10 @@
       root.innerHTML =
         '<div class="detail-grid">' +
           '<div class="detail-media">' +
-            '<div class="detail-imgwrap">' +
+            '<div class="detail-imgwrap' + (it.sold ? ' is-sold' : '') + '">' +
               '<img id="detailImg" src="' + it.img_l + '" alt="' + esc(it.nome) + '">' +
               oficial +
-              (it.sold ? '<div class="sold-badge">VENDIDO</div>' : '') +
+              (it.sold ? '<div class="sold-badge"><span>SOLD</span></div>' : '') +
             '</div>' +
             faceToggle +
           '</div>' +
@@ -286,7 +294,7 @@
             certRow +
             '<div class="admin-only admin-panel">' +
               '<button type="button" id="soldToggleBtn" class="detail-btn sold-toggle-btn">' + (it.sold ? 'Desmarcar vendido' : 'Marcar como vendido') + '</button>' +
-              '<label class="sold-stamp-check"><input type="checkbox" id="soldStampCheck"' + (it.sold ? ' checked' : '') + '> Incluir carimbo VENDIDO no PNG</label>' +
+              '<label class="sold-stamp-check"><input type="checkbox" id="soldStampCheck"' + (it.sold ? ' checked' : '') + '> Incluir carimbo SOLD no PNG</label>' +
               '<div class="ig-btn-row">' +
                 '<button type="button" id="igDownloadBtn" class="detail-btn ig-btn" data-mode="price">&#8681; Download with price</button>' +
                 '<button type="button" id="igDownloadCtaBtn" class="detail-btn ig-btn" data-mode="cta">&#8681; Download (call to DM)</button>' +
@@ -402,12 +410,14 @@
             soldBtn.textContent = nextSold ? 'Desmarcar vendido' : 'Marcar como vendido';
             soldBtn.disabled = false;
             if (soldStampCheck) soldStampCheck.checked = nextSold;
+            var imgwrap = root.querySelector('.detail-imgwrap');
+            imgwrap.classList.toggle('is-sold', nextSold);
             var existingBadge = root.querySelector('.sold-badge');
             if (nextSold && !existingBadge) {
               var badge = document.createElement('div');
               badge.className = 'sold-badge';
-              badge.textContent = 'VENDIDO';
-              root.querySelector('.detail-imgwrap').appendChild(badge);
+              badge.innerHTML = '<span>SOLD</span>';
+              imgwrap.appendChild(badge);
             } else if (!nextSold && existingBadge) {
               existingBadge.remove();
             }

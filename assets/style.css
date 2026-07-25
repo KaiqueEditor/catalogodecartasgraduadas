@@ -462,15 +462,31 @@ body.is-admin .admin-only{display:block;}
 }
 body.is-admin .ig-btn-row{display:flex;}
 
-.sold-badge{
-  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) rotate(-14deg);
-  border:4px double rgba(214,40,40,0.9); border-radius:14px; color:rgba(214,40,40,0.95);
-  font-family:'Oswald',sans-serif; font-weight:800; text-transform:uppercase;
-  font-size:34px; letter-spacing:0.06em; padding:10px 22px;
-  background:rgba(10,10,11,0.35); pointer-events:none;
+.card-imgwrap.is-sold img,
+.detail-imgwrap.is-sold img{filter:grayscale(0.9) brightness(0.85);}
+.card-imgwrap.is-sold::after,
+.detail-imgwrap.is-sold::after{
+  content:""; position:absolute; inset:0; background:rgba(255,255,255,0.10); pointer-events:none;
 }
-@media (min-width:640px){.sold-badge{font-size:46px; padding:14px 30px;}}
 
-.card .sold-badge{font-size:18px; padding:5px 12px; border-width:3px;}
-@media (min-width:640px){.card .sold-badge{font-size:24px; padding:7px 16px;}}
-.card.is-sold .card-imgwrap img{opacity:0.5;}
+.sold-badge{
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) rotate(-16deg);
+  pointer-events:none; display:flex; align-items:center; justify-content:center;
+  padding:14px 34px; background:rgba(10,10,11,0.55);
+  border:3px solid rgba(214,40,40,0.95);
+  box-shadow:0 0 0 5px rgba(10,10,11,0.55), 0 0 0 7px rgba(214,40,40,0.6);
+}
+.sold-badge::before, .sold-badge::after{
+  content:""; position:absolute; width:9px; height:9px; border-radius:50%;
+  background:rgba(214,40,40,0.95); top:6px; left:6px;
+}
+.sold-badge::after{top:auto; left:auto; bottom:6px; right:6px;}
+.sold-badge span{
+  font-family:'Oswald',sans-serif; font-weight:800; text-transform:uppercase;
+  letter-spacing:0.14em; color:rgba(214,40,40,0.98); font-size:28px;
+}
+@media (min-width:640px){.sold-badge span{font-size:40px;} .sold-badge{padding:18px 44px;}}
+
+.card .sold-badge{padding:8px 18px;}
+.card .sold-badge span{font-size:15px;}
+@media (min-width:640px){.card .sold-badge span{font-size:19px;} .card .sold-badge{padding:10px 22px;}}

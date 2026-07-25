@@ -37,10 +37,10 @@
       : '<div class="price-consult">Price on request</div><div></div>';
     var museum = it.brl != null && it.brl >= 100000 ? ' museum' : '';
     var oficial = it.oficial ? '<div class="badge-oficial">OFFICIAL PHOTO &middot; ' + esc(it.cert) + '</div>' : '';
-    var soldBadge = it.sold ? '<div class="sold-badge">VENDIDO</div>' : '';
+    var soldBadge = it.sold ? '<div class="sold-badge"><span>SOLD</span></div>' : '';
     return (
       '<div class="card' + museum + (it.sold ? ' is-sold' : '') + '" data-slug="' + esc(slugFor(it)) + '">' +
-        '<div class="card-imgwrap">' +
+        '<div class="card-imgwrap' + (it.sold ? ' is-sold' : '') + '">' +
           '<img src="' + it.img_s + '" srcset="' + it.img_s + ' 380w, ' + it.img_l + ' 760w" ' +
                'sizes="(min-width:920px) 360px, 45vw" ' +
                'loading="lazy" decoding="async" alt="' + esc(it.nome) + '">' +
