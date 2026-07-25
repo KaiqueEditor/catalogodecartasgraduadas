@@ -37,7 +37,35 @@
     ctx.closePath();
   }
 
-  function generateInstagramImage(it, imgSrc, mode) {
+  function drawSoldStamp(ctx, cx, cy, radius) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(-16 * Math.PI / 180);
+
+    ctx.beginPath();
+    ctx.arc(0, 0, radius, 0, Math.PI * 2);
+    ctx.setLineDash([16, 12]);
+    ctx.lineWidth = 7;
+    ctx.strokeStyle = 'rgba(214,40,40,0.92)';
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.beginPath();
+    ctx.arc(0, 0, radius - 16, 0, Math.PI * 2);
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = 'rgba(214,40,40,0.92)';
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(214,40,40,0.94)';
+    ctx.textAlign = 'center';
+    ctx.font = '800 66px Oswald, sans-serif';
+    ctx.fillText('VENDIDO', 0, 20);
+    ctx.font = '600 24px "IBM Plex Mono", monospace';
+    ctx.fillText('S O L D  O U T', 0, 60);
+    ctx.restore();
+  }
+
+  function generateInstagramImage(it, imgSrc, mode, sold) {
     var W = 1080, H = 1440;
     var showPrice = mode !== 'cta';
     return Promise.all([loadImage(imgSrc), document.fonts.ready]).then(function (res) {
@@ -82,6 +110,10 @@
       ctx.clip();
       ctx.drawImage(cardImg, drawX, drawY, drawW, drawH);
       ctx.restore();
+
+      if (sold) {
+        drawSoldStamp(ctx, boxX + boxW / 2, boxY + boxH / 2, Math.min(boxW, boxH) * 0.32);
+      }
 
       var y = boxY + boxH + 60;
 
@@ -242,6 +274,7 @@
             '<div class="detail-imgwrap">' +
               '<img id="detailImg" src="' + it.img_l + '" alt="' + esc(it.nome) + '">' +
               oficial +
+              (it.sold ? '<div class="sold-badge">VENDIDO</div>' : '') +
             '</div>' +
             faceToggle +
           '</div>' +
@@ -251,9 +284,13 @@
             '<p class="detail-det">' + esc(it.det) + '</p>' +
             '<div class="detail-pricebox">' + priceBlock + '</div>' +
             certRow +
-            '<div class="ig-btn-row">' +
-              '<button type="button" id="igDownloadBtn" class="detail-btn ig-btn" data-mode="price">&#8681; Download with price</button>' +
-              '<button type="button" id="igDownloadCtaBtn" class="detail-btn ig-btn" data-mode="cta">&#8681; Download (call to DM)</button>' +
+            '<div class="admin-only admin-panel">' +
+              '<button type="button" id="soldToggleBtn" class="detail-btn sold-toggle-btn">' + (it.sold ? 'Desmarcar vendido' : 'Marcar como vendido') + '</button>' +
+              '<label class="sold-stamp-check"><input type="checkbox" id="soldStampCheck"' + (it.sold ? ' checked' : '') + '> Incluir carimbo VENDIDO no PNG</label>' +
+              '<div class="ig-btn-row">' +
+                '<button type="button" id="igDownloadBtn" class="detail-btn ig-btn" data-mode="price">&#8681; Download with price</button>' +
+                '<button type="button" id="igDownloadCtaBtn" class="detail-btn ig-btn" data-mode="cta">&#8681; Download (call to DM)</button>' +
+              '</div>' +
             '</div>' +
           '</div>' +
         '</div>' +
@@ -325,13 +362,15 @@
       }, { passive: true });
 
       // ---- Instagram PNG export ----
+      var soldStampCheck = document.getElementById('soldStampCheck');
       root.querySelectorAll('.ig-btn').forEach(function (btn) {
         btn.addEventListener('click', function () {
           var mode = btn.dataset.mode;
+          var sold = soldStampCheck ? soldStampCheck.checked : false;
           root.querySelectorAll('.ig-btn').forEach(function (b) { b.disabled = true; });
           var originalLabel = btn.textContent;
           btn.textContent = 'Generating…';
-          generateInstagramImage(it, img.src, mode).then(function () {
+          generateInstagramImage(it, img.src, mode, sold).then(function () {
             btn.textContent = originalLabel;
             root.querySelectorAll('.ig-btn').forEach(function (b) { b.disabled = false; });
           }).catch(function (err) {
@@ -341,6 +380,45 @@
           });
         });
       });
+
+      // ---- Mark as sold (persists to data.json via GitHub, site-wide) ----
+      var soldBtn = document.getElementById('soldToggleBtn');
+      if (soldBtn) {
+        soldBtn.addEventListener('click', function () {
+          var nextSold = !it.sold;
+          var pw = (window.AdminAuth && window.AdminAuth.getPassword()) || window.prompt('Senha admin:');
+          if (!pw) return;
+          soldBtn.disabled = true;
+          soldBtn.textContent = 'Salvando…';
+          fetch('/api/mark-sold', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: pw, cert: it.cert || it.id, sold: nextSold }),
+          }).then(function (r) {
+            if (!r.ok) return r.json().then(function (j) { throw new Error(j.error || 'Falhou'); });
+            return r.json();
+          }).then(function () {
+            it.sold = nextSold;
+            soldBtn.textContent = nextSold ? 'Desmarcar vendido' : 'Marcar como vendido';
+            soldBtn.disabled = false;
+            if (soldStampCheck) soldStampCheck.checked = nextSold;
+            var existingBadge = root.querySelector('.sold-badge');
+            if (nextSold && !existingBadge) {
+              var badge = document.createElement('div');
+              badge.className = 'sold-badge';
+              badge.textContent = 'VENDIDO';
+              root.querySelector('.detail-imgwrap').appendChild(badge);
+            } else if (!nextSold && existingBadge) {
+              existingBadge.remove();
+            }
+          }).catch(function (err) {
+            console.error(err);
+            window.alert('Erro ao salvar: ' + err.message + '\n\n(Isso so funciona depois que GITHUB_TOKEN e ADMIN_PASSWORD forem configurados na Vercel.)');
+            soldBtn.disabled = false;
+            soldBtn.textContent = it.sold ? 'Desmarcar vendido' : 'Marcar como vendido';
+          });
+        });
+      }
     })
     .catch(function (err) {
       root.innerHTML = '<div class="detail-loading">Could not load this card. <a href="index.html">Go back</a>.</div>';
