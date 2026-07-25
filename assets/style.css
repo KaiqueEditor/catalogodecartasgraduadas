@@ -420,12 +420,13 @@ footer p{font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--ink-
   color:var(--gold-bright); text-decoration:none; transition:border-color .18s, background .18s;
 }
 .detail-btn:hover{background:rgba(232,200,120,0.1); border-color:var(--gold-bright);}
+.ig-btn-row{display:flex; flex-direction:column; gap:10px; margin-top:16px;}
+@media (min-width:480px){.ig-btn-row{flex-direction:row;}}
 .ig-btn{
   cursor:pointer; background:var(--panel); font-family:'IBM Plex Mono',monospace;
-  display:block; width:100%; text-align:center; margin-top:10px;
+  display:block; width:100%; text-align:center; margin-top:0; flex:1;
 }
 .ig-btn:disabled{opacity:0.6; cursor:default;}
-@media (min-width:640px){.ig-btn{width:auto; display:inline-block;}}
 
 .detail-section{max-width:760px; margin-top:34px; padding-top:22px; border-top:1px solid var(--hair);}
 .detail-section h2{font-family:'Oswald',sans-serif; text-transform:uppercase; font-size:14px; letter-spacing:0.04em; margin-bottom:10px; color:var(--gold-bright);}

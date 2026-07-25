@@ -37,8 +37,9 @@
     ctx.closePath();
   }
 
-  function generateInstagramImage(it, imgSrc) {
+  function generateInstagramImage(it, imgSrc, mode) {
     var W = 1080, H = 1440;
+    var showPrice = mode !== 'cta';
     return Promise.all([loadImage(imgSrc), document.fonts.ready]).then(function (res) {
       var cardImg = res[0];
       var canvas = document.createElement('canvas');
@@ -53,7 +54,7 @@
       ctx.fillRect(0, 0, W, H);
 
       // subtle radial glow behind the slab
-      var glow = ctx.createRadialGradient(W / 2, 560, 80, W / 2, 560, 620);
+      var glow = ctx.createRadialGradient(W / 2, 540, 80, W / 2, 540, 620);
       glow.addColorStop(0, 'rgba(198,161,91,0.16)');
       glow.addColorStop(1, 'rgba(198,161,91,0)');
       ctx.fillStyle = glow;
@@ -63,10 +64,10 @@
       ctx.fillStyle = '#e8c878';
       ctx.font = '600 26px "IBM Plex Mono", monospace';
       ctx.textAlign = 'center';
-      ctx.fillText('GRADED COLLECTION', W / 2, 90);
+      ctx.fillText('GRADED COLLECTION', W / 2, 78);
 
-      // slab image, contain-fit inside box
-      var boxX = 90, boxY = 140, boxW = W - 180, boxH = 860;
+      // slab image, contain-fit inside box (bigger when there's no price block below)
+      var boxX = 90, boxY = 122, boxW = W - 180, boxH = showPrice ? 760 : 860;
       var scale = Math.min(boxW / cardImg.width, boxH / cardImg.height);
       var drawW = cardImg.width * scale, drawH = cardImg.height * scale;
       var drawX = boxX + (boxW - drawW) / 2, drawY = boxY + (boxH - drawH) / 2;
@@ -82,7 +83,7 @@
       ctx.drawImage(cardImg, drawX, drawY, drawW, drawH);
       ctx.restore();
 
-      var y = boxY + boxH + 70;
+      var y = boxY + boxH + 86;
 
       // category + grade pill
       ctx.textAlign = 'left';
@@ -104,33 +105,52 @@
       ctx.textAlign = 'center';
       ctx.fillText(gradeText, pillX + (gradeW + pillPad * 2) / 2, y);
 
-      y += 66;
+      y += 62;
       ctx.textAlign = 'left';
       ctx.fillStyle = '#f1ede2';
-      ctx.font = '600 58px Oswald, sans-serif';
+      ctx.font = '600 56px Oswald, sans-serif';
       ctx.fillText(it.nome, 90, y);
 
-      y += 46;
+      y += 42;
       ctx.fillStyle = '#8d8d95';
-      ctx.font = '400 26px "IBM Plex Sans", sans-serif';
-      wrapText(ctx, it.det, 90, y, W - 180, 34);
+      ctx.font = '400 25px "IBM Plex Sans", sans-serif';
+      var detLines = wrapText(ctx, it.det, 90, y, W - 180, 32, true);
+      y += (detLines - 1) * 32;
 
-      // price block
-      var priceY = 1230;
-      if (it.brl != null) {
+      y += 88;
+
+      if (showPrice && it.brl != null) {
         ctx.textAlign = 'left';
         ctx.fillStyle = '#4fae74';
-        ctx.font = '700 84px "IBM Plex Mono", monospace';
-        ctx.fillText(brl(it.brl), 90, priceY);
+        ctx.font = '700 78px "IBM Plex Mono", monospace';
+        ctx.fillText(brl(it.brl), 90, y);
 
         ctx.fillStyle = '#5c5c63';
-        ctx.font = '500 30px "IBM Plex Mono", monospace';
-        ctx.fillText(usd(it.usd), 92, priceY + 42);
-      } else {
+        ctx.font = '500 28px "IBM Plex Mono", monospace';
+        ctx.fillText(usd(it.usd), 92, y + 40);
+      } else if (showPrice) {
         ctx.textAlign = 'left';
         ctx.fillStyle = '#8d8d95';
-        ctx.font = 'italic 400 40px "IBM Plex Sans", sans-serif';
-        ctx.fillText('Price on request', 90, priceY);
+        ctx.font = 'italic 400 38px "IBM Plex Sans", sans-serif';
+        ctx.fillText('Price on request', 90, y);
+      } else {
+        // call-to-action banner instead of a price
+        var ctaW = W - 180, ctaH = 96;
+        var ctaY = y - 62;
+        roundRect(ctx, 90, ctaY, ctaW, ctaH, 14);
+        var ctaGrad = ctx.createLinearGradient(90, 0, 90 + ctaW, 0);
+        ctaGrad.addColorStop(0, 'rgba(232,200,120,0.10)');
+        ctaGrad.addColorStop(1, 'rgba(232,200,120,0.04)');
+        ctx.fillStyle = ctaGrad;
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(232,200,120,0.55)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#e8c878';
+        ctx.font = '600 34px "IBM Plex Mono", monospace';
+        ctx.fillText('CHAME NO DIRECT PARA O VALOR', W / 2, ctaY + 60);
       }
 
       // footer divider + domain
@@ -157,8 +177,9 @@
           if (!blob) { reject(new Error('toBlob failed')); return; }
           var a = document.createElement('a');
           var slug = it.cert || ('p' + it.id);
+          var suffix = showPrice ? '' : '-direct';
           a.href = URL.createObjectURL(blob);
-          a.download = slug + '-' + it.nome.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.png';
+          a.download = slug + '-' + it.nome.toLowerCase().replace(/[^a-z0-9]+/g, '-') + suffix + '.png';
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
@@ -169,7 +190,7 @@
     });
   }
 
-  function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+  function wrapText(ctx, text, x, y, maxWidth, lineHeight, draw) {
     var words = text.split(' ');
     var line = '';
     var lines = [];
@@ -184,9 +205,12 @@
     }
     lines.push(line);
     lines = lines.slice(0, 2);
-    for (var i = 0; i < lines.length; i++) {
-      ctx.fillText(lines[i].trim(), x, y + i * lineHeight);
+    if (draw) {
+      for (var i = 0; i < lines.length; i++) {
+        ctx.fillText(lines[i].trim(), x, y + i * lineHeight);
+      }
     }
+    return lines.length;
   }
 
   var pathMatch = location.pathname.match(/\/c\/([^/]+)/);
@@ -247,7 +271,10 @@
             '<p class="detail-det">' + esc(it.det) + '</p>' +
             '<div class="detail-pricebox">' + priceBlock + '</div>' +
             certRow +
-            '<button type="button" id="igDownloadBtn" class="detail-btn ig-btn">&#8681; Download for Instagram</button>' +
+            '<div class="ig-btn-row">' +
+              '<button type="button" id="igDownloadBtn" class="detail-btn ig-btn" data-mode="price">&#8681; Download with price</button>' +
+              '<button type="button" id="igDownloadCtaBtn" class="detail-btn ig-btn" data-mode="cta">&#8681; Download (call to DM)</button>' +
+            '</div>' +
           '</div>' +
         '</div>' +
         about +
@@ -318,18 +345,20 @@
       }, { passive: true });
 
       // ---- Instagram PNG export ----
-      var igBtn = document.getElementById('igDownloadBtn');
-      igBtn.addEventListener('click', function () {
-        igBtn.disabled = true;
-        var originalLabel = igBtn.textContent;
-        igBtn.textContent = 'Generating…';
-        generateInstagramImage(it, img.src).then(function () {
-          igBtn.textContent = originalLabel;
-          igBtn.disabled = false;
-        }).catch(function (err) {
-          console.error(err);
-          igBtn.textContent = 'Failed — try again';
-          igBtn.disabled = false;
+      root.querySelectorAll('.ig-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var mode = btn.dataset.mode;
+          root.querySelectorAll('.ig-btn').forEach(function (b) { b.disabled = true; });
+          var originalLabel = btn.textContent;
+          btn.textContent = 'Generating…';
+          generateInstagramImage(it, img.src, mode).then(function () {
+            btn.textContent = originalLabel;
+            root.querySelectorAll('.ig-btn').forEach(function (b) { b.disabled = false; });
+          }).catch(function (err) {
+            console.error(err);
+            btn.textContent = 'Failed — try again';
+            root.querySelectorAll('.ig-btn').forEach(function (b) { b.disabled = false; });
+          });
         });
       });
     })
