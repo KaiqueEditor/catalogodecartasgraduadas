@@ -103,29 +103,24 @@ body{
   font-family:'IBM Plex Sans',sans-serif;
   text-transform:none;
 }
-.hero-meta{display:flex; gap:18px; margin-top:14px; padding-top:12px; border-top:1px solid var(--hair);}
+.hero-meta{display:flex; flex-wrap:wrap; align-items:center; gap:14px 18px; margin-top:14px; padding-top:12px; border-top:1px solid var(--hair);}
 .hero-meta div{font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--ink-faint); letter-spacing:0.05em;}
 .hero-meta span{display:block; color:var(--ink); font-size:14px; margin-top:2px; font-weight:500;}
 
 .hero-seller{
-  display:flex; align-items:center; gap:8px;
-  margin-top:12px; padding:7px 10px;
-  background:rgba(255,255,255,0.03);
-  border:1px solid var(--hair);
-  border-radius:10px;
+  display:flex; align-items:center; gap:7px;
+  margin-left:auto;
   text-decoration:none;
-  transition:border-color .18s, background .18s, transform .18s;
 }
-@media (hover:hover){.hero-seller:hover{border-color:rgba(198,161,91,0.4); background:rgba(255,255,255,0.05); transform:translateY(-1px);}}
 .hero-seller-avatar{
-  flex-shrink:0; width:32px; height:32px; border-radius:50%;
+  flex-shrink:0; width:24px; height:24px; border-radius:50%;
   object-fit:cover; object-position:50% 25%;
-  border:1.5px solid rgba(198,161,91,0.5);
+  border:1px solid rgba(198,161,91,0.5);
 }
-.hero-seller-info{flex:1; min-width:0;}
-.hero-seller-name{display:block; color:var(--ink); font-size:11.5px; font-weight:600;}
-.hero-seller-phone{display:block; color:var(--gold-bright); font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:600; letter-spacing:0.02em; margin-top:2px;}
-.hero-seller-icon{flex-shrink:0; width:17px; height:17px; color:#3fbf5f; opacity:0.9;}
+.hero-seller-info{min-width:0;}
+.hero-seller-name{display:block; color:var(--ink); font-size:10px; font-weight:600; line-height:1.2;}
+.hero-seller-phone{display:block; color:var(--gold-bright); font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:600; letter-spacing:0.01em; line-height:1.2;}
+.hero-seller-icon{flex-shrink:0; width:15px; height:15px; color:#3fbf5f; opacity:0.9;}
 
 /* ---------- SEARCH / FILTER BAR ---------- */
 .searchbar-wrap{
@@ -284,7 +279,7 @@ body{
    option stopped being offered at all), but it must not skip rendering when
    that print pass happens, or cards below the fold end up blank again. */
 @media print{
-  .card{content-visibility:visible !important; opacity:1 !important; transform:none !important; animation:none !important;}
+  .card{content-visibility:visible !important; opacity:1 !important; transform:none !important; animation:none !important; break-inside:avoid;}
 }
 @media (hover:hover){.card:hover{border-color:#3a3a42; transform:translateY(-2px);}}
 .card.museum{border-color:rgba(198,161,91,0.35);}
@@ -569,3 +564,17 @@ body.is-admin .ig-btn-row{display:flex;}
 .card .sold-badge{padding:8px 18px;}
 .card .sold-badge span{font-size:15px;}
 @media (min-width:640px){.card .sold-badge span{font-size:19px;} .card .sold-badge{padding:10px 22px;}}
+
+/* Printing / "Save as PDF" from the iPhone Share sheet — more reliable than
+   the OS "Full Page" screenshot toggle, which has been flaky. Force colors
+   to render (mobile browsers strip backgrounds by default when printing),
+   hide controls that don't make sense on paper, and let every card render
+   in full instead of relying on scroll position. */
+@media print{
+  html, body{background:#0a0a0a !important; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  *{-webkit-print-color-adjust:exact !important; print-color-adjust:exact !important;}
+  .searchbar-wrap, .admin-toggle-btn, .lightbox, .detail-topbar .admin-toggle-btn{display:none !important;}
+  .grid{display:grid !important; grid-template-columns:repeat(2, 1fr) !important;}
+  .hero{page-break-after:avoid;}
+  a[href]{color:inherit; text-decoration:none;}
+}
