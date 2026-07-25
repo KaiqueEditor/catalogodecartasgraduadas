@@ -217,7 +217,7 @@
   var params = new URLSearchParams(location.search);
   var id = slug ? null : parseInt(params.get('id'), 10);
 
-  fetch('data.json')
+  fetch('data.json?t=' + Date.now(), { cache: 'no-store' })
     .then(function (r) { return r.json(); })
     .then(function (json) {
       var it = slug
@@ -352,31 +352,47 @@
         touchStartX = null;
       }, { passive: true });
 
-      // ---- Instagram PNG export (downloads both sides for a carousel when available) ----
+      // ---- Instagram PNG export ----
+      // Mobile browsers (Safari/Chrome iOS especially) only allow a download
+      // that fires directly inside a user gesture. Auto-chaining a second
+      // download right after the first (even with a delay) gets silently
+      // blocked on phones. So instead: first tap downloads the front and,
+      // if there's a back photo, flips the button into a "download back"
+      // state that requires its own tap (its own gesture) to fire.
       var soldStampCheck = document.getElementById('soldStampCheck');
       root.querySelectorAll('.ig-btn').forEach(function (btn) {
+        btn.dataset.stage = 'front';
+        btn.dataset.originalLabel = btn.textContent;
         btn.addEventListener('click', function () {
           var mode = btn.dataset.mode;
           var sold = soldStampCheck ? soldStampCheck.checked : false;
-          root.querySelectorAll('.ig-btn').forEach(function (b) { b.disabled = true; });
-          var originalLabel = btn.textContent;
+          var stage = btn.dataset.stage;
+          var otherBtns = Array.prototype.filter.call(root.querySelectorAll('.ig-btn'), function (b) { return b !== btn; });
+          otherBtns.forEach(function (b) { b.disabled = true; });
+          btn.disabled = true;
           btn.textContent = 'Generating…';
 
-          var chain = generateInstagramImage(it, it.img_l, mode, sold, hasBack ? 'front' : null);
-          if (hasBack) {
-            chain = chain.then(function () {
-              return new Promise(function (r) { setTimeout(r, 500); });
-            }).then(function () {
-              return generateInstagramImage(it, it.img_back_l, mode, sold, 'back');
-            });
-          }
-          chain.then(function () {
-            btn.textContent = originalLabel;
-            root.querySelectorAll('.ig-btn').forEach(function (b) { b.disabled = false; });
+          var isBack = stage === 'back';
+          var imgSrc = isBack ? it.img_back_l : it.img_l;
+          var faceSuffix = hasBack ? (isBack ? 'back' : 'front') : null;
+
+          generateInstagramImage(it, imgSrc, mode, sold, faceSuffix).then(function () {
+            if (hasBack && !isBack) {
+              btn.dataset.stage = 'back';
+              btn.textContent = '↓ Download back photo';
+              btn.disabled = false;
+            } else {
+              btn.dataset.stage = 'front';
+              btn.textContent = btn.dataset.originalLabel;
+              btn.disabled = false;
+            }
+            otherBtns.forEach(function (b) { b.disabled = false; });
           }).catch(function (err) {
             console.error(err);
             btn.textContent = 'Failed — try again';
-            root.querySelectorAll('.ig-btn').forEach(function (b) { b.disabled = false; });
+            btn.dataset.stage = 'front';
+            btn.disabled = false;
+            otherBtns.forEach(function (b) { b.disabled = false; });
           });
         });
       });
