@@ -259,7 +259,7 @@
       root.innerHTML =
         '<div class="detail-grid">' +
           '<div class="detail-media">' +
-            '<div class="detail-imgwrap' + (it.sold ? ' is-sold' : '') + '">' +
+            '<div class="detail-imgwrap' + (it.sold ? ' is-sold' : '') + (it.spotlight ? ' spotlight' : '') + '">' +
               '<img id="detailImg" src="' + it.img_l + '" alt="' + esc(it.nome) + '">' +
               oficial +
               featureTag +
