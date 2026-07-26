@@ -356,44 +356,31 @@
       }, { passive: true });
 
       // ---- Instagram PNG export ----
-      // Mobile browsers (Safari/Chrome iOS especially) only allow a download
-      // that fires directly inside a user gesture. Auto-chaining a second
-      // download right after the first (even with a delay) gets silently
-      // blocked on phones. So instead: first tap downloads the front and,
-      // if there's a back photo, flips the button into a "download back"
-      // state that requires its own tap (its own gesture) to fire.
+      // Downloads whichever face (front/back) is currently selected on
+      // screen via the face toggle — one tap, one file, matching what you
+      // see. Switch to the other side first if you want that one instead.
       var soldStampCheck = document.getElementById('soldStampCheck');
       root.querySelectorAll('.ig-btn').forEach(function (btn) {
-        btn.dataset.stage = 'front';
         btn.dataset.originalLabel = btn.textContent;
         btn.addEventListener('click', function () {
           var mode = btn.dataset.mode;
           var sold = soldStampCheck ? soldStampCheck.checked : false;
-          var stage = btn.dataset.stage;
           var otherBtns = Array.prototype.filter.call(root.querySelectorAll('.ig-btn'), function (b) { return b !== btn; });
           otherBtns.forEach(function (b) { b.disabled = true; });
           btn.disabled = true;
           btn.textContent = 'Generating…';
 
-          var isBack = stage === 'back';
+          var isBack = currentFace === 'back';
           var imgSrc = isBack ? it.img_back_l : it.img_l;
           var faceSuffix = hasBack ? (isBack ? 'back' : 'front') : null;
 
           generateInstagramImage(it, imgSrc, mode, sold, faceSuffix).then(function () {
-            if (hasBack && !isBack) {
-              btn.dataset.stage = 'back';
-              btn.textContent = '↓ Download back photo';
-              btn.disabled = false;
-            } else {
-              btn.dataset.stage = 'front';
-              btn.textContent = btn.dataset.originalLabel;
-              btn.disabled = false;
-            }
+            btn.textContent = btn.dataset.originalLabel;
+            btn.disabled = false;
             otherBtns.forEach(function (b) { b.disabled = false; });
           }).catch(function (err) {
             console.error(err);
             btn.textContent = 'Failed — try again';
-            btn.dataset.stage = 'front';
             btn.disabled = false;
             otherBtns.forEach(function (b) { b.disabled = false; });
           });
