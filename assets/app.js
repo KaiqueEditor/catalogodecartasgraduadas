@@ -33,7 +33,7 @@
 
   function cardHTML(it) {
     var priceBlock = it.brl != null
-      ? '<div class="price-usd">' + usd(it.usd) + '</div><div class="price-brl">' + brl(it.brl) + '</div>'
+      ? '<div class="price-usd">' + usd(it.usd) + '</div><div class="price-brl">' + brl(it.brl) + ' <span class="price-freight">+ frete</span></div>'
       : '<div class="price-consult">Price on request</div><div></div>';
     var museum = it.brl != null && it.brl >= 100000 ? ' museum' : '';
     var spotlight = it.spotlight ? ' spotlight' : '';
