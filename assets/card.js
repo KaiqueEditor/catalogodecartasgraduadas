@@ -154,7 +154,7 @@
 
           ctx.fillStyle = '#8d8d95';
           ctx.font = '500 27px "IBM Plex Mono", monospace';
-          ctx.fillText(usd(it.usd), marginX + 3, y + 38);
+          ctx.fillText(usd(it.usd) + '  +frete', marginX + 3, y + 38);
         } else {
           ctx.fillStyle = '#8d8d95';
           ctx.font = 'italic 400 34px "IBM Plex Sans", sans-serif';
@@ -230,7 +230,7 @@
       document.title = it.nome + ' — Graded Collection';
 
       var priceBlock = it.brl != null
-        ? '<div class="detail-price-usd">' + usd(it.usd) + '</div><div class="detail-price-brl">' + brl(it.brl) + '</div>'
+        ? '<div class="detail-price-usd">' + usd(it.usd) + '</div><div class="detail-price-brl">' + brl(it.brl) + ' <span class="price-freight">+ frete</span></div>'
         : '<div class="price-consult">Price on request</div>';
 
       var oficial = it.oficial ? '<div class="badge-oficial">OFFICIAL PHOTO &middot; ' + esc(it.cert) + '</div>' : '';
@@ -436,7 +436,7 @@
                 it.brl = data.brl;
                 var priceBox = root.querySelector('.detail-pricebox');
                 priceBox.innerHTML = it.brl != null
-                  ? '<div class="detail-price-usd">' + usd(it.usd) + '</div><div class="detail-price-brl">' + brl(it.brl) + '</div>'
+                  ? '<div class="detail-price-usd">' + usd(it.usd) + '</div><div class="detail-price-brl">' + brl(it.brl) + ' <span class="price-freight">+ frete</span></div>'
                   : '<div class="price-consult">Price on request</div>';
               });
             });

@@ -368,6 +368,7 @@ body{
 @media (min-width:640px){.price-brl{font-size:10.5px;}}
 .price-consult{font-family:'IBM Plex Sans',sans-serif; font-style:italic; font-size:11px; color:var(--ink-faint);}
 @media (min-width:640px){.price-consult{font-size:13px;}}
+.price-freight{opacity:0.7; font-style:italic;}
 
 .card-ref{display:block; margin-top:7px; font-family:'IBM Plex Mono',monospace; font-size:8.5px; letter-spacing:0.03em; color:var(--ink-faint); text-decoration:none; transition:color 0.2s ease;}
 .card-ref:hover{color:var(--gold-bright);}
