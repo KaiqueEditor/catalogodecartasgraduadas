@@ -133,8 +133,7 @@ body{
 /* ---------- SEARCH / FILTER BAR ---------- */
 .searchbar-wrap{
   position:sticky; top:0; z-index:40;
-  background:rgba(10,10,11,0.94);
-  backdrop-filter:blur(10px);
+  background:var(--void);
   border-bottom:1px solid var(--hair);
 }
 .searchbar{
