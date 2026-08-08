@@ -11,6 +11,9 @@
   var sellersEl = document.getElementById('salesSellers');
   var lockedEl = document.getElementById('salesLocked');
   var exportBtn = document.getElementById('exportCsvBtn');
+  var saveBar = document.getElementById('salesSaveBar');
+  var saveBarBtn = document.getElementById('salesSaveBtn');
+  var saveBarStatus = document.getElementById('salesSaveStatus');
 
   var DATA = [];
   var view = 'sold';
@@ -129,7 +132,6 @@
         '<td class="sales-td-brl num">' + brl(it.brl) + '</td>' +
         '<td class="sales-td-obs">' +
           '<input type="text" class="obs-cell" maxlength="120" placeholder="—" value="' + esc(it.vendedor || '') + '">' +
-          '<span class="obs-cell-status"></span>' +
         '</td>' +
       '</tr>';
     }).join('');
@@ -155,28 +157,65 @@
     wireSellerInputs();
   }
 
-  // Saving straight from the table — same endpoint the card page uses, so a
-  // name written here shows up there and vice versa.
+  // Rows are marked dirty as you type and saved together by one explicit
+  // button — one password check for the whole batch instead of one per field.
+  function dirtyRows() {
+    return Array.prototype.filter.call(
+      tableWrap.querySelectorAll('.obs-cell'),
+      function (input) {
+        var it = itemForInput(input);
+        return it && input.value.trim() !== (it.vendedor || '');
+      }
+    );
+  }
+
+  function itemForInput(input) {
+    var tr = input.closest('tr');
+    if (!tr) return null;
+    return DATA.filter(function (x) { return slugFor(x) === tr.dataset.slug; })[0];
+  }
+
+  function refreshSaveBar() {
+    var n = dirtyRows().length;
+    if (!saveBar) return;
+    saveBar.classList.toggle('visible', n > 0);
+    if (n > 0) saveBarBtn.textContent = 'Salvar ' + n + ' alteraç' + (n === 1 ? 'ão' : 'ões');
+  }
+
   function wireSellerInputs() {
     tableWrap.querySelectorAll('.obs-cell').forEach(function (input) {
-      input.addEventListener('blur', function () {
-        var tr = input.closest('tr');
-        var slug = tr.dataset.slug;
-        var it = DATA.filter(function (x) { return slugFor(x) === slug; })[0];
+      input.addEventListener('input', function () {
+        var it = itemForInput(input);
+        input.closest('tr').classList.toggle('is-dirty', !!it && input.value.trim() !== (it.vendedor || ''));
+        refreshSaveBar();
+      });
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { input.blur(); saveAll(); }
+      });
+    });
+    refreshSaveBar();
+  }
+
+  function saveAll() {
+    var pending = dirtyRows();
+    if (!pending.length) return;
+
+    var pw = (window.AdminAuth && window.AdminAuth.getPassword()) || window.prompt('Senha admin:');
+    if (!pw) return;
+
+    saveBarBtn.disabled = true;
+    saveBarStatus.textContent = 'Salvando…';
+    saveBarStatus.className = 'save-bar-status';
+
+    var done = 0, failed = 0;
+    var chain = Promise.resolve();
+
+    pending.forEach(function (input) {
+      chain = chain.then(function () {
+        var it = itemForInput(input);
         if (!it) return;
-
         var next = input.value.trim();
-        if (next === (it.vendedor || '')) return;
-
-        var status = tr.querySelector('.obs-cell-status');
-        var pw = (window.AdminAuth && window.AdminAuth.getPassword()) || window.prompt('Senha admin:');
-        if (!pw) { input.value = it.vendedor || ''; return; }
-
-        input.disabled = true;
-        status.textContent = '…';
-        status.className = 'obs-cell-status';
-
-        fetch('/api/update-seller', {
+        return fetch('/api/update-seller', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ password: pw, cert: it.cert || it.id, vendedor: next }),
@@ -185,19 +224,28 @@
           return r.json();
         }).then(function () {
           it.vendedor = next;
-          input.disabled = false;
-          status.textContent = '✓';
-          status.className = 'obs-cell-status ok';
-          renderSellers();
-          setTimeout(function () { status.textContent = ''; }, 1800);
+          done++;
+          input.closest('tr').classList.remove('is-dirty');
         }).catch(function (err) {
           console.error(err);
-          input.disabled = false;
-          input.value = it.vendedor || '';
-          status.textContent = '✕';
-          status.className = 'obs-cell-status err';
+          failed++;
+          input.closest('tr').classList.add('is-error');
         });
       });
+    });
+
+    chain.then(function () {
+      saveBarBtn.disabled = false;
+      renderSellers();
+      refreshSaveBar();
+      if (failed) {
+        saveBarStatus.textContent = done + ' salvo(s), ' + failed + ' com erro';
+        saveBarStatus.className = 'save-bar-status err';
+      } else {
+        saveBarStatus.textContent = done + ' salvo(s) ✓';
+        saveBarStatus.className = 'save-bar-status ok';
+        setTimeout(function () { saveBarStatus.textContent = ''; }, 2500);
+      }
     });
   }
 
@@ -244,6 +292,7 @@
   }
 
   if (exportBtn) exportBtn.addEventListener('click', exportCsv);
+  if (saveBarBtn) saveBarBtn.addEventListener('click', saveAll);
 
   document.querySelectorAll('.sales-tab').forEach(function (tab) {
     tab.addEventListener('click', function () {
