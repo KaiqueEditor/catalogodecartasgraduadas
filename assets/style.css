@@ -731,3 +731,18 @@ body.is-admin .ig-btn-row{display:flex;}
 }
 body.is-admin .sales-link{display:inline-block;}
 @media (hover:hover){.sales-link:hover{background:rgba(232,200,120,0.1); border-color:var(--gold-bright);}}
+
+/* Slab thumbnail inside the sales table */
+.sales-td-thumb{width:52px; padding-right:0;}
+.sales-td-thumb a{display:block; width:44px; height:60px; border-radius:6px; overflow:hidden; background:#050506; border:1px solid var(--hair);}
+.sales-td-thumb img{width:100%; height:100%; object-fit:contain; display:block; padding:2px;}
+@media (hover:hover){.sales-td-thumb a:hover{border-color:var(--gold-bright);}}
+
+/* Per-seller consignment breakdown */
+.sales-sellers{margin-bottom:26px;}
+.sales-subtitle{
+  font-family:'Oswald',sans-serif; text-transform:uppercase;
+  font-size:14px; letter-spacing:0.04em; color:var(--gold-bright); margin-bottom:10px;
+}
+.sellers-table{min-width:520px;}
+.sales-td-seller{font-weight:600; color:var(--ink);}

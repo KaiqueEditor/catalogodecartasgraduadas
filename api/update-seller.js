@@ -1,12 +1,13 @@
 // Same pattern as mark-sold.js / update-price.js: verifies the admin password
-// server-side, then commits the private note straight to data.json via the
-// GitHub API. This field is admin-only — it is never rendered for visitors.
+// server-side, then commits the consignor's name straight to data.json via
+// the GitHub API. This tracks WHO is selling each slab (consignment control)
+// and is admin-only — it is never rendered for visitors.
 
 const OWNER = 'KaiqueEditor';
 const REPO = 'catalogodecartasgraduadas';
 const FILE_PATH = 'data.json';
 const BRANCH = 'main';
-const MAX_LEN = 500;
+const MAX_LEN = 120;
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -17,7 +18,7 @@ module.exports = async function handler(req, res) {
   var body = req.body || {};
   var password = body.password;
   var cert = body.cert;
-  var obs = body.obs == null ? '' : String(body.obs);
+  var vendedor = body.vendedor == null ? '' : String(body.vendedor);
 
   if (!process.env.ADMIN_PASSWORD || password !== process.env.ADMIN_PASSWORD) {
     res.status(401).json({ error: 'Unauthorized' });
@@ -27,8 +28,8 @@ module.exports = async function handler(req, res) {
     res.status(400).json({ error: 'Missing cert' });
     return;
   }
-  if (obs.length > MAX_LEN) {
-    res.status(400).json({ error: 'Note too long (max ' + MAX_LEN + ' chars)' });
+  if (vendedor.length > MAX_LEN) {
+    res.status(400).json({ error: 'Seller name too long (max ' + MAX_LEN + ' chars)' });
     return;
   }
   if (!process.env.GITHUB_TOKEN) {
@@ -62,10 +63,10 @@ module.exports = async function handler(req, res) {
       return;
     }
 
-    if (obs.trim() === '') {
-      delete item.obs;
+    if (vendedor.trim() === '') {
+      delete item.vendedor;
     } else {
-      item.obs = obs.trim();
+      item.vendedor = vendedor.trim();
     }
 
     var newContent = JSON.stringify(data, null, 0);
@@ -73,7 +74,7 @@ module.exports = async function handler(req, res) {
       method: 'PUT',
       headers: Object.assign({ 'Content-Type': 'application/json' }, ghHeaders),
       body: JSON.stringify({
-        message: 'chore: atualiza observacao de "' + item.nome + '" (' + cert + ')',
+        message: 'chore: atualiza vendedor de "' + item.nome + '" (' + cert + ')',
         content: Buffer.from(newContent).toString('base64'),
         sha: fileData.sha,
         branch: BRANCH,
@@ -85,7 +86,7 @@ module.exports = async function handler(req, res) {
       return;
     }
 
-    res.status(200).json({ ok: true, obs: item.obs || '' });
+    res.status(200).json({ ok: true, vendedor: item.vendedor || '' });
   } catch (err) {
     res.status(500).json({ error: String(err) });
   }

@@ -8,6 +8,7 @@
 
   var tableWrap = document.getElementById('salesTableWrap');
   var statsEl = document.getElementById('salesStats');
+  var sellersEl = document.getElementById('salesSellers');
   var lockedEl = document.getElementById('salesLocked');
   var exportBtn = document.getElementById('exportCsvBtn');
 
@@ -59,6 +60,53 @@
       '<div class="sales-stat"><span>ESTOQUE (USD)</span><strong>' + usd(availUsd) + '</strong></div>';
   }
 
+  // Consignment control: how much each seller has sold, and how much of
+  // their stock is still sitting unsold.
+  function renderSellers() {
+    var bySeller = {};
+    DATA.forEach(function (it) {
+      var name = (it.vendedor || '').trim() || '— sem vendedor —';
+      if (!bySeller[name]) bySeller[name] = { soldCount: 0, soldUsd: 0, stockCount: 0, stockUsd: 0 };
+      var b = bySeller[name];
+      if (it.sold) {
+        b.soldCount++;
+        b.soldUsd += it.usd || 0;
+      } else {
+        b.stockCount++;
+        b.stockUsd += it.usd || 0;
+      }
+    });
+
+    var names = Object.keys(bySeller).sort(function (a, b) {
+      return bySeller[b].soldUsd - bySeller[a].soldUsd;
+    });
+
+    if (!names.length) { sellersEl.innerHTML = ''; return; }
+
+    sellersEl.innerHTML =
+      '<h2 class="sales-subtitle">Por vendedor</h2>' +
+      '<div class="sales-table-wrap">' +
+      '<table class="sales-table sellers-table">' +
+        '<thead><tr>' +
+          '<th>Vendedor</th>' +
+          '<th class="num">Vendidas</th><th class="num">Total vendido</th>' +
+          '<th class="num">Em estoque</th><th class="num">Valor em estoque</th>' +
+        '</tr></thead>' +
+        '<tbody>' +
+        names.map(function (n) {
+          var b = bySeller[n];
+          return '<tr>' +
+            '<td class="sales-td-seller">' + esc(n) + '</td>' +
+            '<td class="num">' + b.soldCount + '</td>' +
+            '<td class="num sales-td-usd">' + usd(b.soldUsd) + '</td>' +
+            '<td class="num">' + b.stockCount + '</td>' +
+            '<td class="num sales-td-brl">' + usd(b.stockUsd) + '</td>' +
+          '</tr>';
+        }).join('') +
+        '</tbody>' +
+      '</table></div>';
+  }
+
   function renderTable() {
     var list = currentList();
     if (!list.length) {
@@ -68,14 +116,19 @@
 
     var rows = list.map(function (it) {
       return '<tr data-slug="' + esc(slugFor(it)) + '">' +
+        '<td class="sales-td-thumb">' +
+          '<a href="/c/' + esc(slugFor(it)) + '">' +
+            '<img src="' + esc(it.img_s) + '" alt="' + esc(it.nome) + '" loading="lazy" decoding="async">' +
+          '</a>' +
+        '</td>' +
         '<td class="sales-td-name"><a href="/c/' + esc(slugFor(it)) + '">' + esc(it.nome) + '</a>' +
           '<span class="sales-det">' + esc(it.det) + '</span></td>' +
         '<td class="sales-td-grade">' + esc(it.grade) + '</td>' +
         '<td class="sales-td-cert">' + esc(it.cert || '—') + '</td>' +
-        '<td class="sales-td-usd">' + usd(it.usd) + '</td>' +
-        '<td class="sales-td-brl">' + brl(it.brl) + '</td>' +
+        '<td class="sales-td-usd num">' + usd(it.usd) + '</td>' +
+        '<td class="sales-td-brl num">' + brl(it.brl) + '</td>' +
         '<td class="sales-td-obs">' +
-          '<input type="text" class="obs-cell" maxlength="500" placeholder="—" value="' + esc(it.obs || '') + '">' +
+          '<input type="text" class="obs-cell" maxlength="120" placeholder="—" value="' + esc(it.vendedor || '') + '">' +
           '<span class="obs-cell-status"></span>' +
         '</td>' +
       '</tr>';
@@ -87,23 +140,24 @@
     tableWrap.innerHTML =
       '<table class="sales-table">' +
         '<thead><tr>' +
-          '<th>Peça</th><th>Grade</th><th>Certificado</th><th class="num">USD</th><th class="num">BRL</th><th>Observação</th>' +
+          '<th></th><th>Peça</th><th>Grade</th><th>Certificado</th>' +
+          '<th class="num">USD</th><th class="num">BRL</th><th>Vendedor</th>' +
         '</tr></thead>' +
         '<tbody>' + rows + '</tbody>' +
         '<tfoot><tr>' +
-          '<td colspan="3">TOTAL &middot; ' + list.length + ' peça' + (list.length === 1 ? '' : 's') + '</td>' +
+          '<td colspan="4">TOTAL &middot; ' + list.length + ' peça' + (list.length === 1 ? '' : 's') + '</td>' +
           '<td class="num">' + usd(totalUsd) + '</td>' +
           '<td class="num">' + brl(totalBrl) + '</td>' +
           '<td></td>' +
         '</tr></tfoot>' +
       '</table>';
 
-    wireObsInputs();
+    wireSellerInputs();
   }
 
-  // Saving a note straight from the table — same endpoint the card page uses,
-  // so a note written here shows up there and vice versa.
-  function wireObsInputs() {
+  // Saving straight from the table — same endpoint the card page uses, so a
+  // name written here shows up there and vice versa.
+  function wireSellerInputs() {
     tableWrap.querySelectorAll('.obs-cell').forEach(function (input) {
       input.addEventListener('blur', function () {
         var tr = input.closest('tr');
@@ -112,33 +166,34 @@
         if (!it) return;
 
         var next = input.value.trim();
-        if (next === (it.obs || '')) return;
+        if (next === (it.vendedor || '')) return;
 
         var status = tr.querySelector('.obs-cell-status');
         var pw = (window.AdminAuth && window.AdminAuth.getPassword()) || window.prompt('Senha admin:');
-        if (!pw) { input.value = it.obs || ''; return; }
+        if (!pw) { input.value = it.vendedor || ''; return; }
 
         input.disabled = true;
         status.textContent = '…';
         status.className = 'obs-cell-status';
 
-        fetch('/api/update-notes', {
+        fetch('/api/update-seller', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password: pw, cert: it.cert || it.id, obs: next }),
+          body: JSON.stringify({ password: pw, cert: it.cert || it.id, vendedor: next }),
         }).then(function (r) {
           if (!r.ok) return r.json().then(function (j) { throw new Error(j.error || 'falhou'); });
           return r.json();
         }).then(function () {
-          it.obs = next;
+          it.vendedor = next;
           input.disabled = false;
           status.textContent = '✓';
           status.className = 'obs-cell-status ok';
+          renderSellers();
           setTimeout(function () { status.textContent = ''; }, 1800);
         }).catch(function (err) {
           console.error(err);
           input.disabled = false;
-          input.value = it.obs || '';
+          input.value = it.vendedor || '';
           status.textContent = '✕';
           status.className = 'obs-cell-status err';
         });
@@ -150,7 +205,7 @@
   // columns already split, no import wizard needed.
   function exportCsv() {
     var list = currentList();
-    var headers = ['Peça', 'Detalhe', 'Grade', 'Certificado', 'USD', 'BRL', 'Observação'];
+    var headers = ['Peça', 'Detalhe', 'Grade', 'Certificado', 'USD', 'BRL', 'Vendedor'];
 
     function cell(v) {
       if (v == null) return '';
@@ -169,7 +224,7 @@
     list.forEach(function (it) {
       lines.push([
         cell(it.nome), cell(it.det), cell(it.grade), cell(it.cert || ''),
-        num(it.usd), num(it.brl), cell(it.obs || ''),
+        num(it.usd), num(it.brl), cell(it.vendedor || ''),
       ].join(';'));
     });
 
@@ -210,6 +265,7 @@
     .then(function (json) {
       DATA = json.itens;
       renderStats();
+      renderSellers();
       renderTable();
     })
     .catch(function (err) {
