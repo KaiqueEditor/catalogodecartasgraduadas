@@ -301,7 +301,7 @@
               '</div>' +
               '<label class="sold-stamp-check"><input type="checkbox" id="soldCheck"' + (it.sold ? ' checked' : '') + '> Marcar como vendido</label>' +
               '<label class="sold-stamp-check"><input type="checkbox" id="soldStampCheck"' + (it.sold ? ' checked' : '') + '> Incluir carimbo SOLD no PNG</label>' +
-              '<textarea id="obsInput" class="obs-input" rows="2" maxlength="500" placeholder="Observação (só admin vê) — ex: nome do comprador">' + esc(it.obs || '') + '</textarea>' +
+              '<input type="text" id="vendedorInput" class="obs-input" maxlength="120" placeholder="Vendedor / consignante (só admin vê)" value="' + esc(it.vendedor || '') + '">' +
               '<button type="button" id="saveChangesBtn" class="detail-btn price-edit-btn">Salvar alterações</button>' +
               '<div id="saveStatus" class="save-status"></div>' +
               '<div class="ig-btn-row">' +
@@ -441,7 +441,7 @@
       var saveBtn = document.getElementById('saveChangesBtn');
       var priceEditInput = document.getElementById('priceEditInput');
       var soldCheck = document.getElementById('soldCheck');
-      var obsInput = document.getElementById('obsInput');
+      var vendedorInput = document.getElementById('vendedorInput');
       var saveStatus = document.getElementById('saveStatus');
 
       if (saveBtn) {
@@ -453,12 +453,12 @@
             return;
           }
           var nextSold = soldCheck.checked;
-          var nextObs = obsInput ? obsInput.value.trim() : '';
+          var nextVendedor = vendedorInput ? vendedorInput.value.trim() : '';
           var priceChanged = newUsd !== it.usd;
           var soldChanged = nextSold !== !!it.sold;
-          var obsChanged = nextObs !== (it.obs || '');
+          var vendedorChanged = nextVendedor !== (it.vendedor || '');
 
-          if (!priceChanged && !soldChanged && !obsChanged) {
+          if (!priceChanged && !soldChanged && !vendedorChanged) {
             saveStatus.textContent = 'Nada para salvar.';
             saveStatus.className = 'save-status';
             return;
@@ -520,17 +520,17 @@
             });
           }
 
-          if (obsChanged) {
+          if (vendedorChanged) {
             chain = chain.then(function () {
-              return fetch('/api/update-notes', {
+              return fetch('/api/update-seller', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ password: pw, cert: it.cert || it.id, obs: nextObs }),
+                body: JSON.stringify({ password: pw, cert: it.cert || it.id, vendedor: nextVendedor }),
               }).then(function (r) {
-                if (!r.ok) return r.json().then(function (j) { throw new Error('Observação: ' + (j.error || 'falhou')); });
+                if (!r.ok) return r.json().then(function (j) { throw new Error('Vendedor: ' + (j.error || 'falhou')); });
                 return r.json();
               }).then(function () {
-                it.obs = nextObs;
+                it.vendedor = nextVendedor;
               });
             });
           }
