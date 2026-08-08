@@ -301,6 +301,7 @@
               '</div>' +
               '<label class="sold-stamp-check"><input type="checkbox" id="soldCheck"' + (it.sold ? ' checked' : '') + '> Marcar como vendido</label>' +
               '<label class="sold-stamp-check"><input type="checkbox" id="soldStampCheck"' + (it.sold ? ' checked' : '') + '> Incluir carimbo SOLD no PNG</label>' +
+              '<textarea id="obsInput" class="obs-input" rows="2" maxlength="500" placeholder="Observação (só admin vê) — ex: nome do comprador">' + esc(it.obs || '') + '</textarea>' +
               '<button type="button" id="saveChangesBtn" class="detail-btn price-edit-btn">Salvar alterações</button>' +
               '<div id="saveStatus" class="save-status"></div>' +
               '<div class="ig-btn-row">' +
@@ -440,6 +441,7 @@
       var saveBtn = document.getElementById('saveChangesBtn');
       var priceEditInput = document.getElementById('priceEditInput');
       var soldCheck = document.getElementById('soldCheck');
+      var obsInput = document.getElementById('obsInput');
       var saveStatus = document.getElementById('saveStatus');
 
       if (saveBtn) {
@@ -451,10 +453,12 @@
             return;
           }
           var nextSold = soldCheck.checked;
+          var nextObs = obsInput ? obsInput.value.trim() : '';
           var priceChanged = newUsd !== it.usd;
           var soldChanged = nextSold !== !!it.sold;
+          var obsChanged = nextObs !== (it.obs || '');
 
-          if (!priceChanged && !soldChanged) {
+          if (!priceChanged && !soldChanged && !obsChanged) {
             saveStatus.textContent = 'Nada para salvar.';
             saveStatus.className = 'save-status';
             return;
@@ -512,6 +516,21 @@
                 } else if (!nextSold && existingBadge) {
                   existingBadge.remove();
                 }
+              });
+            });
+          }
+
+          if (obsChanged) {
+            chain = chain.then(function () {
+              return fetch('/api/update-notes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: pw, cert: it.cert || it.id, obs: nextObs }),
+              }).then(function (r) {
+                if (!r.ok) return r.json().then(function (j) { throw new Error('Observação: ' + (j.error || 'falhou')); });
+                return r.json();
+              }).then(function () {
+                it.obs = nextObs;
               });
             });
           }
