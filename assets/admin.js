@@ -28,7 +28,10 @@
     sha256(pw).then(function (h) {
       if (h === HASH) {
         localStorage.setItem('admin_ok', '1');
-        sessionStorage.setItem('admin_pw', pw);
+        // Kept in localStorage (not sessionStorage) so it survives closing the
+        // browser — otherwise you stay "logged in" but get re-prompted for the
+        // password on every save. Same weak client-side gate either way.
+        localStorage.setItem('admin_pw', pw);
         applyState();
       } else {
         window.alert('Senha incorreta.');
@@ -38,12 +41,13 @@
 
   function logout() {
     localStorage.removeItem('admin_ok');
+    localStorage.removeItem('admin_pw');
     sessionStorage.removeItem('admin_pw');
     applyState();
   }
 
   function getPassword() {
-    return sessionStorage.getItem('admin_pw') || '';
+    return localStorage.getItem('admin_pw') || sessionStorage.getItem('admin_pw') || '';
   }
 
   window.AdminAuth = { isAdmin: isAdmin, applyState: applyState, getPassword: getPassword };
