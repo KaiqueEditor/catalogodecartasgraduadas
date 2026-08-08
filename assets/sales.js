@@ -249,6 +249,54 @@
     });
   }
 
+  // Hover preview: pointing at a thumbnail pops the full-size slab photo next
+  // to the cursor, so you can read a slab without leaving the table. Pointer
+  // devices only — on touch, tapping the thumb just opens the card page.
+  function initThumbPreview() {
+    if (!window.matchMedia || !window.matchMedia('(hover: hover)').matches) return;
+
+    var preview = document.createElement('div');
+    preview.className = 'slab-preview';
+    preview.innerHTML = '<img alt="">';
+    document.body.appendChild(preview);
+    var previewImg = preview.querySelector('img');
+
+    function place(e) {
+      var pad = 16;
+      var w = preview.offsetWidth || 300;
+      var h = preview.offsetHeight || 420;
+      var x = e.clientX + pad;
+      var y = e.clientY - h / 2;
+      if (x + w > window.innerWidth - pad) x = e.clientX - w - pad;
+      if (y < pad) y = pad;
+      if (y + h > window.innerHeight - pad) y = window.innerHeight - h - pad;
+      preview.style.left = x + 'px';
+      preview.style.top = y + 'px';
+    }
+
+    tableWrap.addEventListener('mouseover', function (e) {
+      var cell = e.target.closest('.sales-td-thumb');
+      if (!cell) return;
+      var tr = cell.closest('tr');
+      var it = DATA.filter(function (x) { return slugFor(x) === tr.dataset.slug; })[0];
+      if (!it) return;
+      previewImg.src = it.img_l || it.img_s;
+      preview.classList.add('visible');
+      place(e);
+    });
+
+    tableWrap.addEventListener('mousemove', function (e) {
+      if (preview.classList.contains('visible') && e.target.closest('.sales-td-thumb')) place(e);
+    });
+
+    tableWrap.addEventListener('mouseout', function (e) {
+      var cell = e.target.closest('.sales-td-thumb');
+      if (cell && !cell.contains(e.relatedTarget)) preview.classList.remove('visible');
+    });
+
+    tableWrap.addEventListener('scroll', function () { preview.classList.remove('visible'); });
+  }
+
   // CSV with a UTF-8 BOM and ";" separator so Excel (pt-BR) opens it with the
   // columns already split, no import wizard needed.
   function exportCsv() {
@@ -316,6 +364,7 @@
       renderStats();
       renderSellers();
       renderTable();
+      initThumbPreview();
     })
     .catch(function (err) {
       tableWrap.innerHTML = '<div class="empty-state" style="display:block">Não foi possível carregar os dados.</div>';

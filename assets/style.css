@@ -775,3 +775,21 @@ body.is-admin .sales-link{display:inline-block;}
 /* Unsaved / failed row markers */
 .sales-table tr.is-dirty .obs-cell{border-color:var(--gold-bright); background:var(--panel);}
 .sales-table tr.is-error .obs-cell{border-color:#e8878a;}
+
+/* Floating full-size slab preview on thumbnail hover (pointer devices only) */
+.slab-preview{
+  position:fixed; z-index:80; pointer-events:none;
+  width:300px; padding:8px;
+  background:rgba(10,10,11,0.97); backdrop-filter:blur(8px);
+  border:1px solid rgba(198,161,91,0.5); border-radius:12px;
+  box-shadow:0 18px 50px rgba(0,0,0,0.7);
+  opacity:0; transform:scale(0.94);
+  transition:opacity .14s ease, transform .14s ease;
+}
+.slab-preview.visible{opacity:1; transform:scale(1);}
+.slab-preview img{
+  display:block; width:100%; height:400px;
+  object-fit:contain; border-radius:7px; background:#050506;
+}
+.sales-td-thumb a{transition:border-color .15s ease, transform .15s ease;}
+@media (hover:hover){.sales-td-thumb a:hover{transform:scale(1.06);}}
