@@ -1,4 +1,11 @@
 (function () {
+  var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  var footerUpdatedEl = document.getElementById('footerUpdated');
+  if (footerUpdatedEl) {
+    var now = new Date();
+    footerUpdatedEl.textContent = MONTHS[now.getMonth()] + ' ' + now.getFullYear();
+  }
+
   var root = document.getElementById('detailRoot');
 
   function brl(v) {
