@@ -11,12 +11,19 @@
   var sellersEl = document.getElementById('salesSellers');
   var lockedEl = document.getElementById('salesLocked');
   var exportBtn = document.getElementById('exportCsvBtn');
+  var searchInput = document.getElementById('salesSearch');
+  var filterBar = document.getElementById('salesFilterBar');
   var saveBar = document.getElementById('salesSaveBar');
   var saveBarBtn = document.getElementById('salesSaveBtn');
   var saveBarStatus = document.getElementById('salesSaveStatus');
 
   var DATA = [];
+  var TAXA_PADRAO = 5.1;
   var view = 'sold';
+  var sellerFilter = null;
+  var query = '';
+
+  var NO_SELLER = '— sem vendedor —';
 
   function usd(v) {
     if (v == null) return '—';
@@ -34,6 +41,20 @@
   function slugFor(it) {
     return it.cert ? it.cert : 'p' + it.id;
   }
+  function sellerOf(it) {
+    return (it.vendedor || '').trim() || NO_SELLER;
+  }
+
+  // A slab sold at its own recorded rate is worth what that rate says, not
+  // what today's catalog rate says — that's the whole point of taxaVenda.
+  function effectiveBrl(it) {
+    if (it.usd == null) return it.brl == null ? null : it.brl;
+    if (it.taxaVenda) return it.usd * it.taxaVenda;
+    return it.brl == null ? null : it.brl;
+  }
+  function usesOwnRate(it) {
+    return !!(it.taxaVenda && it.usd != null);
+  }
 
   function syncLock() {
     var isAdmin = window.AdminAuth && window.AdminAuth.isAdmin();
@@ -41,8 +62,15 @@
   }
 
   function currentList() {
+    var q = query.trim().toLowerCase();
     return DATA.filter(function (it) {
-      return view === 'sold' ? !!it.sold : !it.sold;
+      if (view === 'sold' ? !it.sold : !!it.sold) return false;
+      if (sellerFilter && sellerOf(it) !== sellerFilter) return false;
+      if (q) {
+        var hay = (it.nome + ' ' + it.det + ' ' + (it.cert || '') + ' ' + (it.vendedor || '') + ' ' + it.grade).toLowerCase();
+        if (hay.indexOf(q) === -1) return false;
+      }
+      return true;
     }).sort(function (a, b) {
       return (b.usd || 0) - (a.usd || 0);
     });
@@ -52,28 +80,31 @@
     var sold = DATA.filter(function (it) { return it.sold; });
     var available = DATA.filter(function (it) { return !it.sold; });
     var soldUsd = sold.reduce(function (s, it) { return s + (it.usd || 0); }, 0);
-    var soldBrl = sold.reduce(function (s, it) { return s + (it.brl || 0); }, 0);
+    var soldBrl = sold.reduce(function (s, it) { return s + (effectiveBrl(it) || 0); }, 0);
     var availUsd = available.reduce(function (s, it) { return s + (it.usd || 0); }, 0);
+    var comRate = sold.filter(usesOwnRate).length;
 
     statsEl.innerHTML =
       '<div class="sales-stat"><span>VENDIDOS</span><strong>' + sold.length + '</strong></div>' +
       '<div class="sales-stat"><span>TOTAL VENDIDO (USD)</span><strong class="pos">' + usd(soldUsd) + '</strong></div>' +
-      '<div class="sales-stat"><span>TOTAL VENDIDO (BRL)</span><strong class="pos">' + brl(soldBrl) + '</strong></div>' +
+      '<div class="sales-stat"><span>TOTAL VENDIDO (BRL)</span><strong class="pos">' + brl(soldBrl) + '</strong>' +
+        '<em class="sales-stat-note">' + comRate + '/' + sold.length + ' com câmbio próprio</em></div>' +
       '<div class="sales-stat"><span>EM ESTOQUE</span><strong>' + available.length + '</strong></div>' +
       '<div class="sales-stat"><span>ESTOQUE (USD)</span><strong>' + usd(availUsd) + '</strong></div>';
   }
 
   // Consignment control: how much each seller has sold, and how much of
-  // their stock is still sitting unsold.
+  // their stock is still sitting unsold. Clicking a row filters the table.
   function renderSellers() {
     var bySeller = {};
     DATA.forEach(function (it) {
-      var name = (it.vendedor || '').trim() || '— sem vendedor —';
-      if (!bySeller[name]) bySeller[name] = { soldCount: 0, soldUsd: 0, stockCount: 0, stockUsd: 0 };
+      var name = sellerOf(it);
+      if (!bySeller[name]) bySeller[name] = { soldCount: 0, soldUsd: 0, soldBrl: 0, stockCount: 0, stockUsd: 0 };
       var b = bySeller[name];
       if (it.sold) {
         b.soldCount++;
         b.soldUsd += it.usd || 0;
+        b.soldBrl += effectiveBrl(it) || 0;
       } else {
         b.stockCount++;
         b.stockUsd += it.usd || 0;
@@ -87,37 +118,72 @@
     if (!names.length) { sellersEl.innerHTML = ''; return; }
 
     sellersEl.innerHTML =
-      '<h2 class="sales-subtitle">Por vendedor</h2>' +
+      '<h2 class="sales-subtitle">Por vendedor <em>— clique para filtrar</em></h2>' +
       '<div class="sales-table-wrap">' +
       '<table class="sales-table sellers-table">' +
         '<thead><tr>' +
           '<th>Vendedor</th>' +
-          '<th class="num">Vendidas</th><th class="num">Total vendido</th>' +
+          '<th class="num">Vendidas</th><th class="num">Total (USD)</th><th class="num">Total (BRL)</th>' +
           '<th class="num">Em estoque</th><th class="num">Valor em estoque</th>' +
         '</tr></thead>' +
         '<tbody>' +
         names.map(function (n) {
           var b = bySeller[n];
-          return '<tr>' +
+          return '<tr class="seller-row' + (sellerFilter === n ? ' is-active' : '') + '" data-seller="' + esc(n) + '">' +
             '<td class="sales-td-seller">' + esc(n) + '</td>' +
             '<td class="num">' + b.soldCount + '</td>' +
             '<td class="num sales-td-usd">' + usd(b.soldUsd) + '</td>' +
+            '<td class="num sales-td-brl">' + brl(b.soldBrl) + '</td>' +
             '<td class="num">' + b.stockCount + '</td>' +
             '<td class="num sales-td-brl">' + usd(b.stockUsd) + '</td>' +
           '</tr>';
         }).join('') +
         '</tbody>' +
       '</table></div>';
+
+    sellersEl.querySelectorAll('.seller-row').forEach(function (row) {
+      row.addEventListener('click', function () {
+        var name = row.dataset.seller;
+        sellerFilter = (sellerFilter === name) ? null : name;
+        renderSellers();
+        renderFilterBar();
+        renderTable();
+      });
+    });
+  }
+
+  function renderFilterBar() {
+    if (!filterBar) return;
+    var chips = '';
+    if (sellerFilter) {
+      chips += '<button type="button" class="filter-chip" data-clear="seller">Vendedor: ' + esc(sellerFilter) + ' <span>&times;</span></button>';
+    }
+    if (query.trim()) {
+      chips += '<button type="button" class="filter-chip" data-clear="query">Busca: &ldquo;' + esc(query.trim()) + '&rdquo; <span>&times;</span></button>';
+    }
+    filterBar.innerHTML = chips;
+    filterBar.classList.toggle('visible', !!chips);
+    filterBar.querySelectorAll('.filter-chip').forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        if (chip.dataset.clear === 'seller') sellerFilter = null;
+        if (chip.dataset.clear === 'query') { query = ''; if (searchInput) searchInput.value = ''; }
+        renderSellers();
+        renderFilterBar();
+        renderTable();
+      });
+    });
   }
 
   function renderTable() {
     var list = currentList();
     if (!list.length) {
-      tableWrap.innerHTML = '<div class="empty-state" style="display:block">Nenhuma peça aqui ainda.</div>';
+      tableWrap.innerHTML = '<div class="empty-state" style="display:block">Nenhuma peça encontrada com esses filtros.</div>';
+      refreshSaveBar();
       return;
     }
 
     var rows = list.map(function (it) {
+      var eff = effectiveBrl(it);
       return '<tr data-slug="' + esc(slugFor(it)) + '">' +
         '<td class="sales-td-thumb">' +
           '<a href="/c/' + esc(slugFor(it)) + '">' +
@@ -129,7 +195,11 @@
         '<td class="sales-td-grade">' + esc(it.grade) + '</td>' +
         '<td class="sales-td-cert">' + esc(it.cert || '—') + '</td>' +
         '<td class="sales-td-usd num">' + usd(it.usd) + '</td>' +
-        '<td class="sales-td-brl num">' + brl(it.brl) + '</td>' +
+        '<td class="sales-td-rate">' +
+          '<input type="number" class="rate-cell" step="0.01" min="0" placeholder="' + TAXA_PADRAO + '" value="' + (it.taxaVenda != null ? it.taxaVenda : '') + '">' +
+        '</td>' +
+        '<td class="sales-td-brl num' + (usesOwnRate(it) ? ' own-rate' : '') + '" title="' +
+          (usesOwnRate(it) ? 'Convertido pelo cambio da venda' : 'Convertido pelo cambio padrao do catalogo') + '">' + brl(eff) + '</td>' +
         '<td class="sales-td-obs">' +
           '<input type="text" class="obs-cell" maxlength="120" placeholder="—" value="' + esc(it.vendedor || '') + '">' +
         '</td>' +
@@ -137,36 +207,25 @@
     }).join('');
 
     var totalUsd = list.reduce(function (s, it) { return s + (it.usd || 0); }, 0);
-    var totalBrl = list.reduce(function (s, it) { return s + (it.brl || 0); }, 0);
+    var totalBrl = list.reduce(function (s, it) { return s + (effectiveBrl(it) || 0); }, 0);
 
     tableWrap.innerHTML =
       '<table class="sales-table">' +
         '<thead><tr>' +
           '<th></th><th>Peça</th><th>Grade</th><th>Certificado</th>' +
-          '<th class="num">USD</th><th class="num">BRL</th><th>Vendedor</th>' +
+          '<th class="num">USD</th><th>Câmbio</th><th class="num">BRL</th><th>Vendedor</th>' +
         '</tr></thead>' +
         '<tbody>' + rows + '</tbody>' +
         '<tfoot><tr>' +
           '<td colspan="4">TOTAL &middot; ' + list.length + ' peça' + (list.length === 1 ? '' : 's') + '</td>' +
           '<td class="num">' + usd(totalUsd) + '</td>' +
+          '<td></td>' +
           '<td class="num">' + brl(totalBrl) + '</td>' +
           '<td></td>' +
         '</tr></tfoot>' +
       '</table>';
 
-    wireSellerInputs();
-  }
-
-  // Rows are marked dirty as you type and saved together by one explicit
-  // button — one password check for the whole batch instead of one per field.
-  function dirtyRows() {
-    return Array.prototype.filter.call(
-      tableWrap.querySelectorAll('.obs-cell'),
-      function (input) {
-        var it = itemForInput(input);
-        return it && input.value.trim() !== (it.vendedor || '');
-      }
-    );
+    wireCellInputs();
   }
 
   function itemForInput(input) {
@@ -175,18 +234,38 @@
     return DATA.filter(function (x) { return slugFor(x) === tr.dataset.slug; })[0];
   }
 
+  function pendingFor(input) {
+    var it = itemForInput(input);
+    if (!it) return null;
+    if (input.classList.contains('obs-cell')) {
+      var v = input.value.trim();
+      return v !== (it.vendedor || '') ? { it: it, field: 'vendedor', value: v } : null;
+    }
+    var raw = input.value.trim();
+    var cur = it.taxaVenda != null ? String(it.taxaVenda) : '';
+    return raw !== cur ? { it: it, field: 'taxaVenda', value: raw === '' ? null : Number(raw) } : null;
+  }
+
+  // Rows are marked dirty as you type and saved together by one explicit
+  // button — one password check for the whole batch instead of one per field.
+  function dirtyInputs() {
+    return Array.prototype.filter.call(
+      tableWrap.querySelectorAll('.obs-cell, .rate-cell'),
+      function (input) { return !!pendingFor(input); }
+    );
+  }
+
   function refreshSaveBar() {
-    var n = dirtyRows().length;
     if (!saveBar) return;
+    var n = dirtyInputs().length;
     saveBar.classList.toggle('visible', n > 0);
     if (n > 0) saveBarBtn.textContent = 'Salvar ' + n + ' alteraç' + (n === 1 ? 'ão' : 'ões');
   }
 
-  function wireSellerInputs() {
-    tableWrap.querySelectorAll('.obs-cell').forEach(function (input) {
+  function wireCellInputs() {
+    tableWrap.querySelectorAll('.obs-cell, .rate-cell').forEach(function (input) {
       input.addEventListener('input', function () {
-        var it = itemForInput(input);
-        input.closest('tr').classList.toggle('is-dirty', !!it && input.value.trim() !== (it.vendedor || ''));
+        input.closest('tr').classList.toggle('is-dirty', !!pendingFor(input));
         refreshSaveBar();
       });
       input.addEventListener('keydown', function (e) {
@@ -197,11 +276,21 @@
   }
 
   function saveAll() {
-    var pending = dirtyRows();
+    var pending = dirtyInputs();
     if (!pending.length) return;
 
     var pw = (window.AdminAuth && window.AdminAuth.getPassword()) || window.prompt('Senha admin:');
     if (!pw) return;
+
+    // Group by item so a row with both fields edited is one request.
+    var byItem = {};
+    pending.forEach(function (input) {
+      var p = pendingFor(input);
+      if (!p) return;
+      var key = slugFor(p.it);
+      if (!byItem[key]) byItem[key] = { it: p.it, payload: {} };
+      byItem[key].payload[p.field] = p.value;
+    });
 
     saveBarBtn.disabled = true;
     saveBarStatus.textContent = 'Salvando…';
@@ -210,34 +299,33 @@
     var done = 0, failed = 0;
     var chain = Promise.resolve();
 
-    pending.forEach(function (input) {
+    Object.keys(byItem).forEach(function (key) {
       chain = chain.then(function () {
-        var it = itemForInput(input);
-        if (!it) return;
-        var next = input.value.trim();
-        return fetch('/api/update-seller', {
+        var entry = byItem[key];
+        var body = Object.assign({ password: pw, cert: entry.it.cert || entry.it.id }, entry.payload);
+        return fetch('/api/update-meta', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password: pw, cert: it.cert || it.id, vendedor: next }),
+          body: JSON.stringify(body),
         }).then(function (r) {
           if (!r.ok) return r.json().then(function (j) { throw new Error(j.error || 'falhou'); });
           return r.json();
-        }).then(function () {
-          it.vendedor = next;
+        }).then(function (resp) {
+          if ('vendedor' in entry.payload) entry.it.vendedor = resp.vendedor;
+          if ('taxaVenda' in entry.payload) entry.it.taxaVenda = resp.taxaVenda;
           done++;
-          input.closest('tr').classList.remove('is-dirty');
         }).catch(function (err) {
           console.error(err);
           failed++;
-          input.closest('tr').classList.add('is-error');
         });
       });
     });
 
     chain.then(function () {
       saveBarBtn.disabled = false;
+      renderStats();
       renderSellers();
-      refreshSaveBar();
+      renderTable();
       if (failed) {
         saveBarStatus.textContent = done + ' salvo(s), ' + failed + ' com erro';
         saveBarStatus.className = 'save-bar-status err';
@@ -301,7 +389,7 @@
   // columns already split, no import wizard needed.
   function exportCsv() {
     var list = currentList();
-    var headers = ['Peça', 'Detalhe', 'Grade', 'Certificado', 'USD', 'BRL', 'Vendedor'];
+    var headers = ['Peça', 'Detalhe', 'Grade', 'Certificado', 'USD', 'Câmbio da venda', 'BRL', 'Vendedor'];
 
     function cell(v) {
       if (v == null) return '';
@@ -313,26 +401,31 @@
     }
     function num(v) {
       // pt-BR Excel expects a comma as the decimal separator
-      return v == null ? '' : String(v).replace('.', ',');
+      return v == null || v === '' ? '' : String(v).replace('.', ',');
     }
 
     var lines = [headers.join(';')];
     list.forEach(function (it) {
+      var eff = effectiveBrl(it);
       lines.push([
         cell(it.nome), cell(it.det), cell(it.grade), cell(it.cert || ''),
-        num(it.usd), num(it.brl), cell(it.vendedor || ''),
+        num(it.usd),
+        num(it.taxaVenda != null ? it.taxaVenda : ''),
+        num(eff == null ? '' : Math.round(eff * 100) / 100),
+        cell(it.vendedor || ''),
       ].join(';'));
     });
 
     var totalUsd = list.reduce(function (s, it) { return s + (it.usd || 0); }, 0);
-    var totalBrl = list.reduce(function (s, it) { return s + (it.brl || 0); }, 0);
-    lines.push(['TOTAL', '', '', String(list.length) + ' pecas', num(totalUsd), num(totalBrl), ''].join(';'));
+    var totalBrl = list.reduce(function (s, it) { return s + (effectiveBrl(it) || 0); }, 0);
+    lines.push(['TOTAL', '', '', String(list.length) + ' pecas', num(totalUsd), '', num(Math.round(totalBrl * 100) / 100), ''].join(';'));
 
     var blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
     var a = document.createElement('a');
     var today = new Date().toISOString().slice(0, 10);
+    var suffix = sellerFilter ? '-' + sellerFilter.toLowerCase().replace(/[^a-z0-9]+/g, '-') : '';
     a.href = URL.createObjectURL(blob);
-    a.download = (view === 'sold' ? 'vendidos' : 'estoque') + '-' + today + '.csv';
+    a.download = (view === 'sold' ? 'vendidos' : 'estoque') + suffix + '-' + today + '.csv';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -341,6 +434,19 @@
 
   if (exportBtn) exportBtn.addEventListener('click', exportCsv);
   if (saveBarBtn) saveBarBtn.addEventListener('click', saveAll);
+
+  if (searchInput) {
+    var searchTimer;
+    searchInput.addEventListener('input', function (e) {
+      clearTimeout(searchTimer);
+      var val = e.target.value;
+      searchTimer = setTimeout(function () {
+        query = val;
+        renderFilterBar();
+        renderTable();
+      }, 140);
+    });
+  }
 
   document.querySelectorAll('.sales-tab').forEach(function (tab) {
     tab.addEventListener('click', function () {
@@ -361,8 +467,10 @@
     .then(function (r) { return r.json(); })
     .then(function (json) {
       DATA = json.itens;
+      if (json.taxa) TAXA_PADRAO = json.taxa;
       renderStats();
       renderSellers();
+      renderFilterBar();
       renderTable();
       initThumbPreview();
     })
