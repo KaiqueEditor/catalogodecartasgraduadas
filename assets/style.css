@@ -478,9 +478,10 @@ footer p{font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--ink-
 }
 .detail-btn:hover{background:rgba(232,200,120,0.1); border-color:var(--gold-bright);}
 
+.buy-share-row{display:flex; gap:8px; margin-top:16px;}
 .buy-seller-btn{
   display:flex; align-items:center; justify-content:center; gap:9px;
-  width:100%; margin-top:16px; padding:13px 20px;
+  flex:1; padding:13px 20px; margin-top:0;
   background:#25D366; border:none; border-radius:10px;
   color:#0a1a0f; font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:13.5px; letter-spacing:0.02em;
   box-shadow:0 4px 14px rgba(37,211,102,0.28);
@@ -488,6 +489,17 @@ footer p{font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--ink-
 }
 .buy-seller-btn svg{width:19px; height:19px; flex-shrink:0;}
 @media (hover:hover){.buy-seller-btn:hover{background:#2ee375; transform:translateY(-1px); box-shadow:0 6px 20px rgba(37,211,102,0.38);}}
+
+.share-btn{
+  flex-shrink:0; width:48px;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--panel); border:1px solid var(--hair); border-radius:10px;
+  color:var(--ink-dim); cursor:pointer;
+  font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:600;
+  transition:border-color .15s ease, color .15s ease, transform .15s ease;
+}
+.share-btn svg{width:19px; height:19px;}
+@media (hover:hover){.share-btn:hover{border-color:var(--gold-bright); color:var(--gold-bright); transform:translateY(-1px);}}
 .ig-btn-row{display:flex; flex-direction:column; gap:10px; margin-top:16px;}
 @media (min-width:480px){.ig-btn-row{flex-direction:row;}}
 .ig-btn{

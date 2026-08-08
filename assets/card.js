@@ -250,10 +250,16 @@
       var waMessage = 'Hi! I\'m interested in this slab: ' + it.nome + ' — ' + it.det + ', ' + it.grade +
         (it.cert ? ' (Cert #' + it.cert + ')' : '') +
         '. Is it still available?\n' + location.origin + '/c/' + slugFor(it);
-      var buyBtn = '<a class="detail-btn buy-seller-btn" href="https://wa.me/5511978314215?text=' + encodeURIComponent(waMessage) + '" target="_blank" rel="noopener">' +
-        '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.47 14.38c-.29-.15-1.7-.84-1.96-.93-.26-.1-.46-.15-.65.14-.2.3-.75.94-.92 1.13-.17.2-.34.22-.63.08-.29-.15-1.24-.46-2.36-1.46-.87-.78-1.46-1.74-1.63-2.03-.17-.3-.02-.46.13-.6.13-.13.3-.34.44-.51.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.51-.08-.15-.65-1.58-.9-2.16-.24-.58-.48-.5-.65-.5-.17-.01-.37-.01-.56-.01-.2 0-.51.07-.78.37-.26.3-1.02 1-1.02 2.43 0 1.43 1.05 2.82 1.19 3.01.15.2 2.06 3.14 4.98 4.4.7.3 1.24.48 1.67.61.7.22 1.34.19 1.84.12.56-.08 1.7-.7 1.94-1.37.24-.68.24-1.26.17-1.38-.07-.12-.26-.2-.55-.34z"/><path d="M12.02 2C6.5 2 2.02 6.48 2.02 12c0 1.87.5 3.65 1.45 5.2L2 22l4.93-1.42A9.96 9.96 0 0 0 12.02 22C17.53 22 22 17.52 22 12S17.53 2 12.02 2zm0 18.18c-1.62 0-3.2-.44-4.58-1.28l-.33-.2-3.13.9.9-3.05-.21-.34a8.17 8.17 0 0 1-1.25-4.4c0-4.53 3.68-8.2 8.2-8.2 4.52 0 8.2 3.67 8.2 8.2 0 4.52-3.68 8.2-8.2 8.2z"/></svg>' +
-        ' Buy from Seller' +
-        '</a>';
+      var buyBtn =
+        '<div class="buy-share-row">' +
+          '<a class="detail-btn buy-seller-btn" href="https://wa.me/5511978314215?text=' + encodeURIComponent(waMessage) + '" target="_blank" rel="noopener">' +
+            '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.47 14.38c-.29-.15-1.7-.84-1.96-.93-.26-.1-.46-.15-.65.14-.2.3-.75.94-.92 1.13-.17.2-.34.22-.63.08-.29-.15-1.24-.46-2.36-1.46-.87-.78-1.46-1.74-1.63-2.03-.17-.3-.02-.46.13-.6.13-.13.3-.34.44-.51.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.51-.08-.15-.65-1.58-.9-2.16-.24-.58-.48-.5-.65-.5-.17-.01-.37-.01-.56-.01-.2 0-.51.07-.78.37-.26.3-1.02 1-1.02 2.43 0 1.43 1.05 2.82 1.19 3.01.15.2 2.06 3.14 4.98 4.4.7.3 1.24.48 1.67.61.7.22 1.34.19 1.84.12.56-.08 1.7-.7 1.94-1.37.24-.68.24-1.26.17-1.38-.07-.12-.26-.2-.55-.34z"/><path d="M12.02 2C6.5 2 2.02 6.48 2.02 12c0 1.87.5 3.65 1.45 5.2L2 22l4.93-1.42A9.96 9.96 0 0 0 12.02 22C17.53 22 22 17.52 22 12S17.53 2 12.02 2zm0 18.18c-1.62 0-3.2-.44-4.58-1.28l-.33-.2-3.13.9.9-3.05-.21-.34a8.17 8.17 0 0 1-1.25-4.4c0-4.53 3.68-8.2 8.2-8.2 4.52 0 8.2 3.67 8.2 8.2 0 4.52-3.68 8.2-8.2 8.2z"/></svg>' +
+            ' Buy from Seller' +
+          '</a>' +
+          '<button type="button" id="shareBtn" class="share-btn" aria-label="Share this slab">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>' +
+          '</button>' +
+        '</div>';
 
       // find prev/next within same list order for simple navigation
       var idx = json.itens.findIndex(function (x) { return x.id === it.id; });
@@ -300,6 +306,31 @@
         about +
         graderInfo +
         navHTML;
+
+      // ---- Share ----
+      // Native share sheet on mobile (lets you pick WhatsApp, Instagram,
+      // Messages, etc.); falls back to opening a WhatsApp share link, then
+      // to copying the URL if even that isn't available.
+      var shareBtn = document.getElementById('shareBtn');
+      if (shareBtn) {
+        shareBtn.addEventListener('click', function () {
+          var shareUrl = location.origin + '/c/' + slugFor(it);
+          var shareText = it.nome + ' — ' + it.det + ', ' + it.grade;
+          if (navigator.share) {
+            navigator.share({ title: it.nome + ' — Graded Collection', text: shareText, url: shareUrl }).catch(function () {});
+          } else if (navigator.clipboard) {
+            navigator.clipboard.writeText(shareUrl).then(function () {
+              var original = shareBtn.innerHTML;
+              shareBtn.textContent = 'Copied!';
+              setTimeout(function () { shareBtn.innerHTML = original; }, 1500);
+            }).catch(function () {
+              window.open('https://wa.me/?text=' + encodeURIComponent(shareText + ' ' + shareUrl), '_blank');
+            });
+          } else {
+            window.open('https://wa.me/?text=' + encodeURIComponent(shareText + ' ' + shareUrl), '_blank');
+          }
+        });
+      }
 
       var img = document.getElementById('detailImg');
       var toggle = root.querySelector('.face-toggle');
