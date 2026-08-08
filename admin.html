@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sales &mdash; Graded Collection</title>
+<meta name="robots" content="noindex,nofollow">
+<base href="/">
+<link rel="icon" href="favicon-32.png?v=4" sizes="32x32" type="image/png">
+<link rel="icon" href="favicon-16.png?v=4" sizes="16x16" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=4">
+<meta name="theme-color" content="#0a0a0a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css?v=38">
+</head>
+<body>
+
+<div class="detail-topbar">
+  <a href="/" class="back-link">&larr; Back to collection</a>
+  <button type="button" id="adminToggleBtn" class="admin-toggle-btn">Admin</button>
+</div>
+
+<div class="sales-wrap">
+  <div id="salesLocked" class="sales-locked">
+    <h1>Sales dashboard</h1>
+    <p>Area restrita. Clique em <strong>Admin</strong> no topo e entre com a senha para ver as vendas.</p>
+  </div>
+
+  <div id="salesRoot" class="admin-only">
+    <div class="sales-head">
+      <h1>Sales dashboard</h1>
+      <div class="sales-actions">
+        <button type="button" id="exportCsvBtn" class="detail-btn sales-export-btn">&#8681; Exportar para Excel</button>
+      </div>
+    </div>
+
+    <div id="salesStats" class="sales-stats"></div>
+
+    <div class="sales-tabs">
+      <button type="button" class="sales-tab active" data-view="sold">Vendidos</button>
+      <button type="button" class="sales-tab" data-view="available">Disponíveis</button>
+    </div>
+
+    <div id="salesTableWrap" class="sales-table-wrap">
+      <div class="detail-loading">Carregando&hellip;</div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>GRADED COLLECTION<br>Painel interno &middot; <span id="footerUpdated">&mdash;</span></p>
+</footer>
+
+<script src="assets/admin.js?v=1" defer></script>
+<script src="assets/sales.js?v=1" defer></script>
+</body>
+</html>
