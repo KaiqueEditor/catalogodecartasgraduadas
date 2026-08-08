@@ -1,7 +1,11 @@
 // Same pattern as mark-sold.js / update-price.js: verifies the admin password
-// server-side, then commits the consignor's name straight to data.json via
-// the GitHub API. This tracks WHO is selling each slab (consignment control)
-// and is admin-only — it is never rendered for visitors.
+// server-side, then commits admin-only bookkeeping fields to data.json via
+// the GitHub API. Both are private and never rendered for visitors:
+//   vendedor   - who is consigning/selling the slab
+//   taxaVenda  - the USD->BRL rate at the moment of the sale, so the BRL
+//                figure reflects the real rate that day instead of the
+//                catalog's current global rate.
+// Each field is only touched when its key is present in the request body.
 
 const OWNER = 'KaiqueEditor';
 const REPO = 'catalogodecartasgraduadas';
@@ -18,7 +22,10 @@ module.exports = async function handler(req, res) {
   var body = req.body || {};
   var password = body.password;
   var cert = body.cert;
-  var vendedor = body.vendedor == null ? '' : String(body.vendedor);
+  var hasVendedor = Object.prototype.hasOwnProperty.call(body, 'vendedor');
+  var hasTaxa = Object.prototype.hasOwnProperty.call(body, 'taxaVenda');
+  var vendedor = hasVendedor && body.vendedor != null ? String(body.vendedor) : '';
+  var taxaRaw = hasTaxa && body.taxaVenda !== null && body.taxaVenda !== '' ? Number(body.taxaVenda) : null;
 
   if (!process.env.ADMIN_PASSWORD || password !== process.env.ADMIN_PASSWORD) {
     res.status(401).json({ error: 'Unauthorized' });
@@ -28,8 +35,16 @@ module.exports = async function handler(req, res) {
     res.status(400).json({ error: 'Missing cert' });
     return;
   }
+  if (!hasVendedor && !hasTaxa) {
+    res.status(400).json({ error: 'Nothing to update' });
+    return;
+  }
   if (vendedor.length > MAX_LEN) {
     res.status(400).json({ error: 'Seller name too long (max ' + MAX_LEN + ' chars)' });
+    return;
+  }
+  if (taxaRaw !== null && (isNaN(taxaRaw) || taxaRaw <= 0 || taxaRaw > 100)) {
+    res.status(400).json({ error: 'Invalid exchange rate' });
     return;
   }
   if (!process.env.GITHUB_TOKEN) {
@@ -63,10 +78,19 @@ module.exports = async function handler(req, res) {
       return;
     }
 
-    if (vendedor.trim() === '') {
-      delete item.vendedor;
-    } else {
-      item.vendedor = vendedor.trim();
+    if (hasVendedor) {
+      if (vendedor.trim() === '') {
+        delete item.vendedor;
+      } else {
+        item.vendedor = vendedor.trim();
+      }
+    }
+    if (hasTaxa) {
+      if (taxaRaw === null) {
+        delete item.taxaVenda;
+      } else {
+        item.taxaVenda = taxaRaw;
+      }
     }
 
     var newContent = JSON.stringify(data, null, 0);
@@ -74,7 +98,7 @@ module.exports = async function handler(req, res) {
       method: 'PUT',
       headers: Object.assign({ 'Content-Type': 'application/json' }, ghHeaders),
       body: JSON.stringify({
-        message: 'chore: atualiza vendedor de "' + item.nome + '" (' + cert + ')',
+        message: 'chore: atualiza dados admin de "' + item.nome + '" (' + cert + ')',
         content: Buffer.from(newContent).toString('base64'),
         sha: fileData.sha,
         branch: BRANCH,
@@ -86,7 +110,7 @@ module.exports = async function handler(req, res) {
       return;
     }
 
-    res.status(200).json({ ok: true, vendedor: item.vendedor || '' });
+    res.status(200).json({ ok: true, vendedor: item.vendedor || '', taxaVenda: item.taxaVenda == null ? null : item.taxaVenda });
   } catch (err) {
     res.status(500).json({ error: String(err) });
   }

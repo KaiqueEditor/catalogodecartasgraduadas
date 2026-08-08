@@ -522,7 +522,7 @@
 
           if (vendedorChanged) {
             chain = chain.then(function () {
-              return fetch('/api/update-seller', {
+              return fetch('/api/update-meta', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ password: pw, cert: it.cert || it.id, vendedor: nextVendedor }),
