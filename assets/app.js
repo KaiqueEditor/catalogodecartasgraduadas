@@ -1,4 +1,11 @@
 (function () {
+  var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  var now = new Date();
+  var metaUpdatedEl = document.getElementById('metaUpdated');
+  if (metaUpdatedEl) metaUpdatedEl.textContent = MONTHS[now.getMonth()].slice(0, 3).toUpperCase() + ' / ' + now.getFullYear();
+  var footerUpdatedEl = document.getElementById('footerUpdated');
+  if (footerUpdatedEl) footerUpdatedEl.textContent = MONTHS[now.getMonth()] + ' ' + now.getFullYear();
+
   var grid = document.getElementById('grid');
   var tcgChipsWrap = document.getElementById('tcgChips');
   var subChipsWrap = document.getElementById('subChips');
@@ -166,14 +173,8 @@
       });
       var metaTotal = document.getElementById('metaTotal');
       var metaPrec = document.getElementById('metaPrecificadas');
-      var metaUpdated = document.getElementById('metaUpdated');
       if (metaTotal) metaTotal.textContent = DATA.length;
       if (metaPrec) metaPrec.textContent = DATA.filter(function (it) { return it.usd != null; }).length;
-      if (metaUpdated) {
-        var MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-        var now = new Date();
-        metaUpdated.textContent = MONTHS[now.getMonth()] + ' / ' + now.getFullYear();
-      }
 
       var tcgs = json.tcgs || ['Pokemon', 'Lorcana', 'Magic'];
       var tcgHTML = '<div class="chip tcg active" data-tcg="All">All</div>';
