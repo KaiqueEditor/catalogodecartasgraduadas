@@ -166,8 +166,14 @@
       });
       var metaTotal = document.getElementById('metaTotal');
       var metaPrec = document.getElementById('metaPrecificadas');
+      var metaUpdated = document.getElementById('metaUpdated');
       if (metaTotal) metaTotal.textContent = DATA.length;
       if (metaPrec) metaPrec.textContent = DATA.filter(function (it) { return it.usd != null; }).length;
+      if (metaUpdated) {
+        var MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+        var now = new Date();
+        metaUpdated.textContent = MONTHS[now.getMonth()] + ' / ' + now.getFullYear();
+      }
 
       var tcgs = json.tcgs || ['Pokemon', 'Lorcana', 'Magic'];
       var tcgHTML = '<div class="chip tcg active" data-tcg="All">All</div>';
