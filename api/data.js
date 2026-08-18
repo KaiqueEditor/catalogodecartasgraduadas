@@ -6,6 +6,11 @@
 // means admin edits (price/sold) are visible to everyone immediately, with
 // no redeploy step at all.
 //
+// Admin-only bookkeeping fields (vendedor, taxaVenda, obs) are stripped here
+// before the response goes out: this endpoint is public, so anything it
+// returns is world-readable. The dashboard reads the unredacted data from
+// /api/admin-data, which requires a session token.
+//
 // This uses the GitHub Contents API (api.github.com), NOT
 // raw.githubusercontent.com — the raw host sits behind a CDN (Fastly) that
 // caches responses for several minutes regardless of cache-busting query
@@ -17,6 +22,8 @@ const OWNER = 'KaiqueEditor';
 const REPO = 'catalogodecartasgraduadas';
 const FILE_PATH = 'data.json';
 const BRANCH = 'main';
+
+const { stripPrivate } = require('./_auth');
 
 module.exports = async function handler(req, res) {
   try {
@@ -34,9 +41,10 @@ module.exports = async function handler(req, res) {
       return;
     }
     var text = await ghRes.text();
+    var publicData = stripPrivate(JSON.parse(text));
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     res.setHeader('Cache-Control', 'no-store');
-    res.status(200).send(text);
+    res.status(200).send(JSON.stringify(publicData));
   } catch (err) {
     res.status(500).json({ error: String(err) });
   }

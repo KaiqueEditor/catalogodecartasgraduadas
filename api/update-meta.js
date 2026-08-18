@@ -11,6 +11,8 @@ const OWNER = 'KaiqueEditor';
 const REPO = 'catalogodecartasgraduadas';
 const FILE_PATH = 'data.json';
 const BRANCH = 'main';
+
+const { requireAuth } = require('./_auth');
 const MAX_LEN = 120;
 
 module.exports = async function handler(req, res) {
@@ -20,17 +22,13 @@ module.exports = async function handler(req, res) {
   }
 
   var body = req.body || {};
-  var password = body.password;
   var cert = body.cert;
   var hasVendedor = Object.prototype.hasOwnProperty.call(body, 'vendedor');
   var hasTaxa = Object.prototype.hasOwnProperty.call(body, 'taxaVenda');
   var vendedor = hasVendedor && body.vendedor != null ? String(body.vendedor) : '';
   var taxaRaw = hasTaxa && body.taxaVenda !== null && body.taxaVenda !== '' ? Number(body.taxaVenda) : null;
 
-  if (!process.env.ADMIN_PASSWORD || password !== process.env.ADMIN_PASSWORD) {
-    res.status(401).json({ error: 'Unauthorized' });
-    return;
-  }
+  if (!requireAuth(req, res)) return;
   if (!cert) {
     res.status(400).json({ error: 'Missing cert' });
     return;

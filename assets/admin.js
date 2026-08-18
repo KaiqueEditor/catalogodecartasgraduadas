@@ -1,19 +1,18 @@
 (function () {
-  // NOTE: this is a client-side gate only (no real backend auth). It hides
-  // admin controls from casual visitors; it is not real security since the
-  // hash below ships in the page source.
-  var HASH = '86f788e2b98f2842c2008745d8d28ff0ef264287e1bb4be94045058e709112f0';
+  // The password is NEVER stored or checked here. Previously this file shipped
+  // a SHA-256 hash of it, which anyone could read from the page source and
+  // brute-force — that gave away write access to every admin endpoint. Now the
+  // password is posted once to /api/login, verified server-side, and exchanged
+  // for a signed token with an expiry. Only the token lives in the browser,
+  // and every privileged endpoint validates it on the server.
+  var TOKEN_KEY = 'admin_token';
 
-  function sha256(msg) {
-    return crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg)).then(function (buf) {
-      return Array.prototype.map.call(new Uint8Array(buf), function (b) {
-        return b.toString(16).padStart(2, '0');
-      }).join('');
-    });
+  function getToken() {
+    return localStorage.getItem(TOKEN_KEY) || '';
   }
 
   function isAdmin() {
-    return localStorage.getItem('admin_ok') === '1';
+    return !!getToken();
   }
 
   function applyState() {
@@ -25,32 +24,58 @@
   function login() {
     var pw = window.prompt('Senha admin:');
     if (!pw) return;
-    sha256(pw).then(function (h) {
-      if (h === HASH) {
-        localStorage.setItem('admin_ok', '1');
-        // Kept in localStorage (not sessionStorage) so it survives closing the
-        // browser — otherwise you stay "logged in" but get re-prompted for the
-        // password on every save. Same weak client-side gate either way.
-        localStorage.setItem('admin_pw', pw);
-        applyState();
-      } else {
-        window.alert('Senha incorreta.');
-      }
+    fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw }),
+    }).then(function (r) {
+      return r.json().then(function (j) {
+        if (!r.ok) throw new Error(j.error || 'Falha no login');
+        return j;
+      });
+    }).then(function (j) {
+      localStorage.setItem(TOKEN_KEY, j.token);
+      applyState();
+      // Reload so admin-only views fetch their data with the new token.
+      window.location.reload();
+    }).catch(function (err) {
+      window.alert(err.message || 'Senha incorreta.');
     });
   }
 
   function logout() {
+    localStorage.removeItem(TOKEN_KEY);
+    // Clear credentials left over from the old client-side gate.
     localStorage.removeItem('admin_ok');
     localStorage.removeItem('admin_pw');
     sessionStorage.removeItem('admin_pw');
     applyState();
+    window.location.reload();
   }
 
-  function getPassword() {
-    return localStorage.getItem('admin_pw') || sessionStorage.getItem('admin_pw') || '';
+  // Any token the server rejects is dead weight — drop it so the UI stops
+  // pretending we're logged in.
+  function clearIfRejected(response) {
+    if (response && response.status === 401) {
+      localStorage.removeItem(TOKEN_KEY);
+      applyState();
+    }
+    return response;
   }
 
-  window.AdminAuth = { isAdmin: isAdmin, applyState: applyState, getPassword: getPassword };
+  // Wipe stale keys from the previous, insecure gate on first load.
+  if (localStorage.getItem('admin_ok') || localStorage.getItem('admin_pw')) {
+    localStorage.removeItem('admin_ok');
+    localStorage.removeItem('admin_pw');
+    sessionStorage.removeItem('admin_pw');
+  }
+
+  window.AdminAuth = {
+    isAdmin: isAdmin,
+    applyState: applyState,
+    getToken: getToken,
+    clearIfRejected: clearIfRejected,
+  };
 
   document.addEventListener('DOMContentLoaded', function () {
     applyState();
@@ -61,4 +86,5 @@
       });
     }
   });
+  applyState();
 })();
