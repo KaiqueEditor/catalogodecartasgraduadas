@@ -24,8 +24,13 @@ const FILE_PATH = 'data.json';
 const BRANCH = 'main';
 
 const { stripPrivate } = require('./_auth');
+const { enforce } = require('./_ratelimit');
 
 module.exports = async function handler(req, res) {
+  // Uma visita normal faz 1 chamada. 100/min por IP nao incomoda ninguem
+  // real, mas corta um robo puxando o catalogo em loop.
+  if (!enforce(req, res, 'data', 100, 60 * 1000)) return;
+
   try {
     var url = 'https://api.github.com/repos/' + OWNER + '/' + REPO + '/contents/' + FILE_PATH + '?ref=' + BRANCH;
     var headers = {
@@ -44,6 +49,7 @@ module.exports = async function handler(req, res) {
     var publicData = stripPrivate(JSON.parse(text));
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow');
     res.status(200).send(JSON.stringify(publicData));
   } catch (err) {
     res.status(500).json({ error: String(err) });

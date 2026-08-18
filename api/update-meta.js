@@ -13,6 +13,7 @@ const FILE_PATH = 'data.json';
 const BRANCH = 'main';
 
 const { requireAuth } = require('./_auth');
+const { enforce } = require('./_ratelimit');
 const MAX_LEN = 120;
 
 module.exports = async function handler(req, res) {
@@ -28,6 +29,7 @@ module.exports = async function handler(req, res) {
   var vendedor = hasVendedor && body.vendedor != null ? String(body.vendedor) : '';
   var taxaRaw = hasTaxa && body.taxaVenda !== null && body.taxaVenda !== '' ? Number(body.taxaVenda) : null;
 
+  if (!enforce(req, res, 'write', 60, 60 * 1000)) return;
   if (!requireAuth(req, res)) return;
   if (!cert) {
     res.status(400).json({ error: 'Missing cert' });

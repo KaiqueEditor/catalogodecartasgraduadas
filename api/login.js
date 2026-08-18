@@ -3,12 +3,17 @@
 
 const crypto = require('crypto');
 const { issueToken } = require('./_auth');
+const { enforce, reset } = require('./_ratelimit');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
+  // 8 tentativas a cada 15 min por IP. Sem isso a senha pode ser adivinhada
+  // por tentativa e erro, por mais forte que ela seja.
+  if (!enforce(req, res, 'login', 8, 15 * 60 * 1000)) return;
+
   if (!process.env.ADMIN_PASSWORD) {
     res.status(500).json({ error: 'Server missing ADMIN_PASSWORD' });
     return;
@@ -28,6 +33,7 @@ module.exports = async function handler(req, res) {
     return;
   }
 
+  reset(req, 'login');
   res.setHeader('Cache-Control', 'no-store');
   res.status(200).json({ ok: true, token: issueToken() });
 };

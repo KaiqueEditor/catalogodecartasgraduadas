@@ -7,6 +7,7 @@ const FILE_PATH = 'data.json';
 const BRANCH = 'main';
 
 const { requireAuth } = require('./_auth');
+const { enforce } = require('./_ratelimit');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -18,6 +19,7 @@ module.exports = async function handler(req, res) {
   var cert = body.cert;
   var usd = body.usd === null ? null : Number(body.usd);
 
+  if (!enforce(req, res, 'write', 60, 60 * 1000)) return;
   if (!requireAuth(req, res)) return;
   if (!cert) {
     res.status(400).json({ error: 'Missing cert' });
