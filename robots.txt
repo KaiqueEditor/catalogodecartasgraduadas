@@ -1,2 +1,6 @@
 User-agent: *
 Allow: /
+
+# The API and the internal dashboard should never show up in search results.
+Disallow: /api/
+Disallow: /admin

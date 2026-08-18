@@ -3,6 +3,7 @@
 // taxaVenda / obs, and it is what the sales dashboard reads.
 
 const { requireAuth } = require('./_auth');
+const { enforce } = require('./_ratelimit');
 
 const OWNER = 'KaiqueEditor';
 const REPO = 'catalogodecartasgraduadas';
@@ -14,6 +15,7 @@ module.exports = async function handler(req, res) {
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
+  if (!enforce(req, res, 'admin', 60, 60 * 1000)) return;
   if (!requireAuth(req, res)) return;
 
   if (!process.env.GITHUB_TOKEN) {
