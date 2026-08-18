@@ -442,6 +442,27 @@
       var priceEditInput = document.getElementById('priceEditInput');
       var soldCheck = document.getElementById('soldCheck');
       var vendedorInput = document.getElementById('vendedorInput');
+
+      // vendedor is a private field, so the public /api/data no longer carries
+      // it. Pull it from the authenticated endpoint once, only when signed in.
+      if (vendedorInput && window.AdminAuth && window.AdminAuth.isAdmin()) {
+        fetch('/api/admin-data', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          cache: 'no-store',
+          body: JSON.stringify({ token: window.AdminAuth.getToken() }),
+        }).then(function (r) {
+          window.AdminAuth.clearIfRejected(r);
+          if (!r.ok) throw new Error('unauthorized');
+          return r.json();
+        }).then(function (full) {
+          var mine = full.itens.filter(function (x) { return slugFor(x) === slugFor(it); })[0];
+          if (!mine) return;
+          it.vendedor = mine.vendedor;
+          it.taxaVenda = mine.taxaVenda;
+          vendedorInput.value = mine.vendedor || '';
+        }).catch(function (err) { console.error(err); });
+      }
       var saveStatus = document.getElementById('saveStatus');
 
       if (saveBtn) {
@@ -464,8 +485,8 @@
             return;
           }
 
-          var pw = (window.AdminAuth && window.AdminAuth.getPassword()) || window.prompt('Senha admin:');
-          if (!pw) return;
+          var token = window.AdminAuth && window.AdminAuth.getToken();
+          if (!token) { window.alert('Sessão expirada. Clique em Admin e entre novamente.'); return; }
 
           saveBtn.disabled = true;
           saveStatus.className = 'save-status';
@@ -478,8 +499,9 @@
               return fetch('/api/update-price', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ password: pw, cert: it.cert || it.id, usd: newUsd }),
+                body: JSON.stringify({ token: token, cert: it.cert || it.id, usd: newUsd }),
               }).then(function (r) {
+                if (window.AdminAuth) window.AdminAuth.clearIfRejected(r);
                 if (!r.ok) return r.json().then(function (j) { throw new Error('Preco: ' + (j.error || 'falhou')); });
                 return r.json();
               }).then(function (data) {
@@ -498,8 +520,9 @@
               return fetch('/api/mark-sold', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ password: pw, cert: it.cert || it.id, sold: nextSold }),
+                body: JSON.stringify({ token: token, cert: it.cert || it.id, sold: nextSold }),
               }).then(function (r) {
+                if (window.AdminAuth) window.AdminAuth.clearIfRejected(r);
                 if (!r.ok) return r.json().then(function (j) { throw new Error('Vendido: ' + (j.error || 'falhou')); });
                 return r.json();
               }).then(function () {
@@ -525,8 +548,9 @@
               return fetch('/api/update-meta', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ password: pw, cert: it.cert || it.id, vendedor: nextVendedor }),
+                body: JSON.stringify({ token: token, cert: it.cert || it.id, vendedor: nextVendedor }),
               }).then(function (r) {
+                if (window.AdminAuth) window.AdminAuth.clearIfRejected(r);
                 if (!r.ok) return r.json().then(function (j) { throw new Error('Vendedor: ' + (j.error || 'falhou')); });
                 return r.json();
               }).then(function () {

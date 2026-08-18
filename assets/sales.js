@@ -279,8 +279,8 @@
     var pending = dirtyInputs();
     if (!pending.length) return;
 
-    var pw = (window.AdminAuth && window.AdminAuth.getPassword()) || window.prompt('Senha admin:');
-    if (!pw) return;
+    var token = window.AdminAuth && window.AdminAuth.getToken();
+    if (!token) { window.alert('Sessão expirada. Clique em Admin e entre novamente.'); return; }
 
     // Group by item so a row with both fields edited is one request.
     var byItem = {};
@@ -302,12 +302,13 @@
     Object.keys(byItem).forEach(function (key) {
       chain = chain.then(function () {
         var entry = byItem[key];
-        var body = Object.assign({ password: pw, cert: entry.it.cert || entry.it.id }, entry.payload);
+        var body = Object.assign({ token: token, cert: entry.it.cert || entry.it.id }, entry.payload);
         return fetch('/api/update-meta', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
         }).then(function (r) {
+          if (window.AdminAuth) window.AdminAuth.clearIfRejected(r);
           if (!r.ok) return r.json().then(function (j) { throw new Error(j.error || 'falhou'); });
           return r.json();
         }).then(function (resp) {
@@ -463,8 +464,18 @@
   document.addEventListener('DOMContentLoaded', syncLock);
   syncLock();
 
-  fetch('/api/data?t=' + Date.now(), { cache: 'no-store' })
-    .then(function (r) { return r.json(); })
+  var authToken = window.AdminAuth && window.AdminAuth.getToken();
+  fetch('/api/admin-data', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    cache: 'no-store',
+    body: JSON.stringify({ token: authToken }),
+  })
+    .then(function (r) {
+      if (window.AdminAuth) window.AdminAuth.clearIfRejected(r);
+      if (!r.ok) throw new Error('unauthorized');
+      return r.json();
+    })
     .then(function (json) {
       DATA = json.itens;
       if (json.taxa) TAXA_PADRAO = json.taxa;
@@ -475,7 +486,11 @@
       initThumbPreview();
     })
     .catch(function (err) {
-      tableWrap.innerHTML = '<div class="empty-state" style="display:block">Não foi possível carregar os dados.</div>';
+      tableWrap.innerHTML = '<div class="empty-state" style="display:block">' +
+        (window.AdminAuth && window.AdminAuth.isAdmin()
+          ? 'Não foi possível carregar os dados.'
+          : 'Entre como Admin para ver as vendas.') + '</div>';
+      syncLock();
       console.error(err);
     });
 })();

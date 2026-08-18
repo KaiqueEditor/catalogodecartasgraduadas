@@ -10,6 +10,8 @@ const REPO = 'catalogodecartasgraduadas';
 const FILE_PATH = 'data.json';
 const BRANCH = 'main';
 
+const { requireAuth } = require('./_auth');
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
@@ -17,14 +19,10 @@ module.exports = async function handler(req, res) {
   }
 
   var body = req.body || {};
-  var password = body.password;
   var cert = body.cert;
   var sold = !!body.sold;
 
-  if (!process.env.ADMIN_PASSWORD || password !== process.env.ADMIN_PASSWORD) {
-    res.status(401).json({ error: 'Unauthorized' });
-    return;
-  }
+  if (!requireAuth(req, res)) return;
   if (!cert) {
     res.status(400).json({ error: 'Missing cert' });
     return;
