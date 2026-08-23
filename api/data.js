@@ -41,6 +41,15 @@ module.exports = async function handler(req, res) {
       headers.Authorization = 'Bearer ' + process.env.GITHUB_TOKEN;
     }
     var ghRes = await fetch(url, { headers: headers });
+    if (!ghRes.ok && headers.Authorization) {
+      // GITHUB_TOKEN pode estar expirado/invalido; o repo e publico, entao
+      // uma chamada sem auth ainda funciona (só sujeita ao rate limit de
+      // 60/h por IP de saida da Vercel). Evita que o catalogo fique fora
+      // do ar so por causa do token de admin.
+      ghRes = await fetch(url, {
+        headers: { Accept: headers.Accept, 'User-Agent': headers['User-Agent'] },
+      });
+    }
     if (!ghRes.ok) {
       res.status(502).json({ error: 'Failed to fetch data.json from GitHub' });
       return;
